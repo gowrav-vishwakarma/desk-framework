@@ -1,0 +1,257 @@
+/*
+ * Desk tokens. The Light colours come from vue3-excel-editor (MIT).
+ * Copyright (c) 2019 Kenneth Cheng <app.6502@gmail.com>
+ *
+ * Light is the :root default. A theme sets data-desk-theme on the document
+ * element and replaces the colour tokens. Sizes stay on :root.
+ */
+:root {
+  /* Tones for totals and figures; backgrounds mix them into the row colour, so every theme works. */
+  --desk-tone-success: #1b7f3b;
+  --desk-tone-info: #175cd3;
+  --desk-tone-warning: #8a6d00;
+  --desk-tone-alert: #b45309;
+  --desk-tone-danger: #c0392b;
+  --desk-grid-line: lightgray;
+  --desk-header-bg: #e9ecef;
+  --desk-header-focus: rgb(61, 85, 61);
+  --desk-cursor: rgb(108, 143, 108);
+  --desk-cell-focus-ring: #212529;
+  --desk-cell-focus-outline: rgb(108, 143, 108);
+  --desk-row-bg: #ffffff;
+  --desk-row-selected: #bbbbbb;
+  --desk-filter-bg: #fffff2;
+  --desk-text: #212529;
+  --desk-muted: dimgray;
+  --desk-link: #007bff;
+  --desk-suggest-bg: lightyellow;
+  --desk-suggest-active: lightsteelblue;
+  --desk-suggest-line: #efe6a8;
+  --desk-star: #d4a017;
+  --desk-error: #c0392b;
+  --desk-invalid-bg: #fdecea;
+  --desk-danger: var(--desk-error);
+  --desk-danger-bg: var(--desk-invalid-bg);
+  --desk-hover-bg: #e9ecef;
+  --desk-menu-on-bg: #ffffff;
+  --desk-range-bg: #d9e6d9;
+  --desk-group-bg: #f4f6f8;
+  --desk-hint: #8a5a00;
+  --desk-text-shadow: 0.3px 0.3px 1px #ccc;
+  --desk-chrome-blur: 0px;
+  --desk-ui-scale: 1;
+  --desk-font: 0.88rem;
+  --desk-row-height: calc(24px * var(--desk-ui-scale));
+  --desk-header-height: calc(29px * var(--desk-ui-scale));
+  --desk-footer-height: calc(25px * var(--desk-ui-scale));
+  --desk-index-width: calc(40px * var(--desk-ui-scale));
+  --desk-toolbar-height: calc(24px * var(--desk-ui-scale));
+  --desk-toolbar-icon-size: calc(16px * var(--desk-ui-scale));
+  --desk-fkey-bar-min-height: calc(33px * var(--desk-ui-scale));
+}
+
+:root[data-desk-theme='dark'] {
+  --desk-tone-success: #6fcf8f;
+  --desk-tone-info: #8ab4f8;
+  --desk-tone-warning: #e0c05a;
+  --desk-tone-alert: #f0a35a;
+  --desk-tone-danger: #f07167;
+  --desk-grid-line: #3a3f45;
+  --desk-header-bg: #2c3136;
+  --desk-header-focus: #8fbc8f;
+  --desk-cursor: #8fbc8f;
+  --desk-cell-focus-ring: #e8eaed;
+  --desk-cell-focus-outline: #8fbc8f;
+  --desk-row-bg: #1e2226;
+  --desk-row-selected: #4a5158;
+  --desk-filter-bg: #2a2e22;
+  --desk-text: #e8eaed;
+  --desk-muted: #9aa0a6;
+  --desk-link: #8ab4f8;
+  --desk-suggest-bg: #3a3820;
+  --desk-suggest-active: #3d4d66;
+  --desk-suggest-line: #5c5838;
+  --desk-star: #e0b15a;
+  --desk-error: #f07167;
+  --desk-invalid-bg: #3a2422;
+  --desk-hover-bg: #3a4046;
+  --desk-menu-on-bg: #353b41;
+  --desk-range-bg: #2c3a2c;
+  --desk-group-bg: #262b30;
+  --desk-hint: #e0b15a;
+  --desk-text-shadow: none;
+  --desk-chrome-blur: 0px;
+}
+
+:root[data-desk-theme='blue'] {
+  --desk-grid-line: #8aa0b8;
+  --desk-header-bg: #e4ebf4;
+  --desk-header-focus: #2f5d8a;
+  --desk-cursor: #4a7eab;
+  --desk-cell-focus-ring: #1c3348;
+  --desk-cell-focus-outline: #4a7eab;
+  --desk-row-bg: #f7f9fc;
+  --desk-row-selected: #c5d4e4;
+  --desk-filter-bg: #eef3f8;
+  --desk-text: #1c3348;
+  --desk-muted: #5c7084;
+  --desk-link: #1d5fa8;
+  --desk-suggest-bg: #f4f6e8;
+  --desk-suggest-active: #d5e2f0;
+  --desk-suggest-line: #e3e7c4;
+  --desk-star: #c4922a;
+  --desk-error: #b33a32;
+  --desk-invalid-bg: #fbeceb;
+  --desk-hover-bg: #dce6f1;
+  --desk-menu-on-bg: #ffffff;
+  --desk-range-bg: #d4e4f2;
+  --desk-group-bg: #e8eef5;
+  --desk-hint: #8a5a00;
+  --desk-text-shadow: 0.3px 0.3px 1px #d5dee8;
+  --desk-chrome-blur: 0px;
+}
+
+:root[data-desk-theme='green'] {
+  --desk-grid-line: #7d8a78;
+  --desk-header-bg: #e6eee4;
+  --desk-header-focus: #3d5c3a;
+  --desk-cursor: #5d8a56;
+  --desk-cell-focus-ring: #243024;
+  --desk-cell-focus-outline: #5d8a56;
+  --desk-row-bg: #f8f7f2;
+  --desk-row-selected: #c9d4c4;
+  --desk-filter-bg: #f4f3e4;
+  --desk-text: #243024;
+  --desk-muted: #5e6b58;
+  --desk-link: #2d6a4f;
+  --desk-suggest-bg: #f7f4d8;
+  --desk-suggest-active: #d5e4d0;
+  --desk-suggest-line: #e8e2b4;
+  --desk-star: #c4922a;
+  --desk-error: #b33a32;
+  --desk-invalid-bg: #fbeceb;
+  --desk-hover-bg: #dce6d8;
+  --desk-menu-on-bg: #fffcf6;
+  --desk-range-bg: #d5e6d2;
+  --desk-group-bg: #eef2ea;
+  --desk-hint: #8a5a00;
+  --desk-text-shadow: 0.3px 0.3px 1px #ddd8c8;
+  --desk-chrome-blur: 0px;
+}
+
+:root[data-desk-theme='sand'] {
+  --desk-grid-line: #b7a48c;
+  --desk-header-bg: #f0e6d6;
+  --desk-header-focus: #8a5a28;
+  --desk-cursor: #b07a3c;
+  --desk-cell-focus-ring: #3d2e1e;
+  --desk-cell-focus-outline: #b07a3c;
+  --desk-row-bg: #fbf7f0;
+  --desk-row-selected: #e0d2bc;
+  --desk-filter-bg: #f8f1dc;
+  --desk-text: #3d2e1e;
+  --desk-muted: #7a6a56;
+  --desk-link: #8a5a20;
+  --desk-suggest-bg: #fff6d8;
+  --desk-suggest-active: #ead9b8;
+  --desk-suggest-line: #f3e6c0;
+  --desk-star: #b07a3c;
+  --desk-error: #a33b2b;
+  --desk-invalid-bg: #fbe8e4;
+  --desk-hover-bg: #eadcc8;
+  --desk-menu-on-bg: #fffdf8;
+  --desk-range-bg: #efe0c8;
+  --desk-group-bg: #f3ebe0;
+  --desk-hint: #8a4e12;
+  --desk-text-shadow: 0.3px 0.3px 1px #e6dcc8;
+  --desk-chrome-blur: 0px;
+}
+
+:root[data-desk-theme='slate'] {
+  --desk-grid-line: #6e7a86;
+  --desk-header-bg: #e6eaee;
+  --desk-header-focus: #3d4c5c;
+  --desk-cursor: #5c6e80;
+  --desk-cell-focus-ring: #1e2830;
+  --desk-cell-focus-outline: #5c6e80;
+  --desk-row-bg: #f4f6f8;
+  --desk-row-selected: #c5ced6;
+  --desk-filter-bg: #eef1f4;
+  --desk-text: #1e2830;
+  --desk-muted: #5c6872;
+  --desk-link: #2f5f8a;
+  --desk-suggest-bg: #f6f4e4;
+  --desk-suggest-active: #d5dee6;
+  --desk-suggest-line: #e6e2c4;
+  --desk-star: #c4922a;
+  --desk-error: #b33a32;
+  --desk-invalid-bg: #fbeceb;
+  --desk-hover-bg: #d8dee4;
+  --desk-menu-on-bg: #ffffff;
+  --desk-range-bg: #d5dee6;
+  --desk-group-bg: #e4e8ec;
+  --desk-hint: #8a5a00;
+  --desk-text-shadow: none;
+  --desk-chrome-blur: 0px;
+}
+
+:root[data-desk-theme='night'] {
+  --desk-tone-success: #6fcf8f;
+  --desk-tone-info: #8ab4f8;
+  --desk-tone-warning: #e0c05a;
+  --desk-tone-alert: #f0a35a;
+  --desk-tone-danger: #f07167;
+  --desk-grid-line: #2a3a52;
+  --desk-header-bg: #152033;
+  --desk-header-focus: #6eb0ff;
+  --desk-cursor: #4c9aff;
+  --desk-cell-focus-ring: #e8f1ff;
+  --desk-cell-focus-outline: #4c9aff;
+  --desk-row-bg: #0e1624;
+  --desk-row-selected: #243656;
+  --desk-filter-bg: #162033;
+  --desk-text: #e7eef8;
+  --desk-muted: #8ea0b8;
+  --desk-link: #7eb6ff;
+  --desk-suggest-bg: #2a2818;
+  --desk-suggest-active: #1e3a5c;
+  --desk-suggest-line: #4a4630;
+  --desk-star: #e0b15a;
+  --desk-error: #ff8a80;
+  --desk-invalid-bg: #3a2228;
+  --desk-hover-bg: #1c2c44;
+  --desk-menu-on-bg: #1a2940;
+  --desk-range-bg: #16304e;
+  --desk-group-bg: #142033;
+  --desk-hint: #e0b15a;
+  --desk-text-shadow: none;
+  --desk-chrome-blur: 0px;
+}
+
+:root[data-desk-theme='frost'] {
+  --desk-grid-line: #5c6770;
+  --desk-header-bg: rgba(255, 255, 255, 0.72);
+  --desk-header-focus: #2f4a3a;
+  --desk-cursor: #3d6b56;
+  --desk-cell-focus-ring: #1c2428;
+  --desk-cell-focus-outline: #3d6b56;
+  --desk-row-bg: #f3f5f7;
+  --desk-row-selected: #c9d0d6;
+  --desk-filter-bg: #eef2e8;
+  --desk-text: #1c2428;
+  --desk-muted: #4e5962;
+  --desk-link: #1d5fa8;
+  --desk-suggest-bg: #f7f6d8;
+  --desk-suggest-active: #d5e0ea;
+  --desk-suggest-line: #e8e4bc;
+  --desk-star: #c4922a;
+  --desk-error: #b33a32;
+  --desk-invalid-bg: #fbeceb;
+  --desk-hover-bg: rgba(255, 255, 255, 0.55);
+  --desk-menu-on-bg: rgba(255, 255, 255, 0.88);
+  --desk-range-bg: #d5e2ea;
+  --desk-group-bg: #e6ebef;
+  --desk-hint: #8a5a00;
+  --desk-text-shadow: none;
+  --desk-chrome-blur: 12px;
+}

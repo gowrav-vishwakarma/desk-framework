@@ -1,0 +1,37 @@
+export interface DeskHeaderButton {
+  id: string;
+  label: string;
+  disabled: boolean;
+}
+
+const slug = (text: string): string => text.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+function buttonId(el: HTMLElement, label: string): string {
+  return el.dataset.deskAction ?? el.dataset.deskField ?? (slug(label) || 'button');
+}
+
+function visibleButtons(root: HTMLElement | null): { el: HTMLElement; button: DeskHeaderButton }[] {
+  if (!root) return [];
+  return [...root.querySelectorAll<HTMLElement>('button, a[href], [role="button"]')]
+    .filter((el) => el.getClientRects().length > 0)
+    .map((el) => {
+      const label = (el.getAttribute('aria-label') ?? el.textContent ?? '').replace(/\s+/g, ' ').trim();
+      const disabled = el.hasAttribute('disabled') || el.getAttribute('aria-disabled') === 'true';
+      return { el, button: { id: buttonId(el, label), label, disabled } };
+    });
+}
+
+/** Buttons a page put in its header, as a person sees them. Ids come from `data-desk-action`, then `data-desk-field`, then the label. */
+export function headerButtons(root: HTMLElement | null): DeskHeaderButton[] {
+  return visibleButtons(root).map((item) => item.button);
+}
+
+export function pressHeaderButton(root: HTMLElement | null, target: string): { ok: boolean; error?: string; reason?: string; pressed?: string } {
+  const wanted = target.trim().toLowerCase();
+  const all = visibleButtons(root);
+  const hit = all.find((item) => item.button.id.toLowerCase() === wanted) ?? all.find((item) => item.button.label.toLowerCase() === wanted);
+  if (!hit) return { ok: false, error: `no header button ${target}`, reason: `buttons: ${all.map((item) => `${item.button.id} (${item.button.label})`).join(' | ') || 'none'}` };
+  if (hit.button.disabled) return { ok: false, error: `${hit.button.label} is disabled right now` };
+  hit.el.click();
+  return { ok: true, pressed: hit.button.id };
+}
