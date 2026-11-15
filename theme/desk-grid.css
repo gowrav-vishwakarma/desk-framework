@@ -2090,6 +2090,13 @@ body.desk-col-dragging {
   flex: 1;
   min-height: 0;
   gap: 8px;
+  /* When the sheet and the grids below it are taller than the page, the form scrolls (not the sheet). */
+  overflow-y: auto;
+}
+
+/* A settings sheet in a filling form stays as tall as its rows: grids below it never squeeze it to a scrollbar. */
+.desk-form-fill .desk-settings {
+  flex-shrink: 0;
 }
 
 .desk-tabs {
