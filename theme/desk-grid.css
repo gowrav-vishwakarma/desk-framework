@@ -2370,6 +2370,12 @@ body.desk-col-dragging {
 .desk-grid .systable td.desk-set-invalid.desk-set-current {
   box-shadow: inset 0 0 0 2px var(--desk-error);
 }
+/* The problem's text under the value, like a form field's message. */
+.desk-grid .systable td .desk-set-msg {
+  display: block;
+  padding-left: 4px;
+  white-space: normal;
+}
 
 /* A settings sheet is as tall as its rows. A page that wants it to fill sets flex: 1 on .desk-settings. */
 .desk-grid.desk-settings {

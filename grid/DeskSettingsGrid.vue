@@ -119,6 +119,7 @@
                       decorative
                       :kind="markKind(setting) === 'search' ? 'search' : 'select'"
                     />
+                    <span v-if="editingKey !== setting.key && issueOf(setting)" class="desk-field-msg desk-set-msg">{{ issueOf(setting) }}</span>
                   </td>
                 </template>
                 <template v-else-if="row.cells[1]">
