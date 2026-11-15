@@ -680,6 +680,8 @@ function onKey(event: KeyboardEvent): void {
       return;
     }
     choose(highlighted);
+    // In a grid, Enter on a row picks it and moves on, as a click does.
+    if (props.variant === 'grid') emit('advance', 'enter');
     return;
   }
   emit('advance', 'enter');
