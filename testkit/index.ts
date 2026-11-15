@@ -4,6 +4,7 @@ export {
   deskCellShown,
   deskCountRows,
   deskFindRow,
+  deskExpectNoRow,
   deskGrid,
   deskFilterColumn,
   deskOffers,

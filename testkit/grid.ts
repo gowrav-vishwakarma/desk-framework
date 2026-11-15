@@ -120,6 +120,23 @@ export async function deskFindRow(client: DeskClient, grid: string, column: stri
 }
 
 /**
+ * The grid no longer shows a row whose `column` equals `text` (after a delete): filters the column, as a user would to
+ * look for it, until the list answers without it. Throws with the rows still shown.
+ */
+export async function deskExpectNoRow(client: DeskClient, grid: string, column: string, text: string, timeoutMs = 10_000): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  let last: DeskShownRow[] = [];
+  while (Date.now() < deadline) {
+    expectOk(await client.act(grid, 'filter', { col: column, text }), `filter ${column} on ${grid}`);
+    await client.waitIdle();
+    last = (await client.read<DeskGridView>(grid, { offset: 0, limit: 20 })).rows ?? [];
+    if (!last.some((row) => deskCellShown(row, column) === text)) return;
+    await new Promise((resolve) => setTimeout(resolve, 400));
+  }
+  throw new Error(`the grid still shows ${column} ${JSON.stringify(text)}. rows: ${JSON.stringify(last)}`);
+}
+
+/**
  * Actions of a loaded row. Pass the row from `deskFindRow`: its `index` is the loaded place.
  * A numeric string is read as an index, so the row key is not used here.
  */
