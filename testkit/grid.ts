@@ -192,3 +192,41 @@ export async function deskRunRowActionDirect(
     await client.waitIdle();
   }
 }
+
+/**
+ * Type into a grid cell's lookup as a person does and pick the row showing `text`: click the cell (row index, column
+ * id), type (the first key opens the editor), wait for the list, move down to the row that shows `text`, Enter. Throws when the list has no such row.
+ */
+export async function deskPickInCell(
+  page: DeskUserPage,
+  client: DeskClient,
+  grid: string,
+  row: number,
+  column: string,
+  text: string,
+  timeoutMs = 8000,
+): Promise<void> {
+  const cell = page.locator(deskLocators.node(grid)).first().locator(deskLocators.gridCell(row, column)).first();
+  await cell.click();
+  // Typing on the cell opens its editor with the first key, as for a person; the rest follows the focus.
+  await cell.pressSequentially(text, { delay: 20 });
+  const wanted = text.toLowerCase();
+  const deadline = Date.now() + timeoutMs;
+  for (let moves = 0; Date.now() < deadline; ) {
+    const active = page.locator(deskLocators.lookupActive).first();
+    if (await active.count()) {
+      const shown = (await active.innerText()).replace(/\s+/g, ' ').trim().toLowerCase();
+      if (shown.includes(wanted) && !shown.includes('searching')) {
+        await page.keyboard.press('Enter');
+        await client.waitIdle();
+        return;
+      }
+      if (moves < 20 && !shown.includes('searching')) {
+        await page.keyboard.press('ArrowDown');
+        moves += 1;
+      }
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error(`no lookup row showing ${JSON.stringify(text)} in ${grid} row ${row} ${column}`);
+}

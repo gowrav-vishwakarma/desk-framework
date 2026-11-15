@@ -6,6 +6,7 @@ export {
   deskFindRow,
   deskGrid,
   deskPageSize,
+  deskPickInCell,
   deskRowActionStates,
   deskRunRowAction,
   deskRunRowActionDirect,

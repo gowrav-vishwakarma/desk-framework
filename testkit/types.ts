@@ -21,6 +21,9 @@ export interface DeskLocator {
   click(options?: { timeout?: number }): Promise<void>;
   count(): Promise<number>;
   isVisible(options?: { timeout?: number }): Promise<boolean>;
+  pressSequentially(text: string, options?: { delay?: number }): Promise<void>;
+  press(key: string): Promise<void>;
+  innerText(): Promise<string>;
 }
 
 /** A page a person drives: a Playwright `Page` fits. */

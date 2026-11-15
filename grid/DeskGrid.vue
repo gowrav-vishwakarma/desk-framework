@@ -123,6 +123,7 @@
                 v-if="spanOf(item.row, column, item.index) !== 0"
                 :rowspan="spanOf(item.row, column, item.index)"
                 :data-cell="`${item.index}-${colIndex}`"
+                :data-col="column.id"
                 :class="cellClass(item.row, column, item.index, colIndex)"
                 :style="colStyle(column.id)"
                 :title="errorOf(item.row, column) ?? ''"
