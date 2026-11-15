@@ -173,7 +173,7 @@ const props = withDefaults(defineProps<{
   blank?: boolean;
   /** This field takes focus when its page or dialog opens. */
   initial?: boolean;
-  readonly?: boolean;
+  readonly?: boolean | undefined;
   /** Currency kind: Rate stays 1 and cannot be typed when Conversion Rate is off. */
   rateLocked?: boolean;
   /** Ctrl+Arrow is not a field move while this field has focus. */

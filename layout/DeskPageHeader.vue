@@ -22,7 +22,7 @@ import { headerButtons, pressHeaderButton } from './headerButtons';
 
 defineProps<{
   title: string;
-  subtitle?: string;
+  subtitle?: string | undefined;
 }>();
 
 const actionsEl = ref<HTMLElement | null>(null);

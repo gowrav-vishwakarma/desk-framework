@@ -377,7 +377,7 @@ export interface DeskRange {
 }
 
 export interface DeskGridRow extends Record<string, unknown> {
-  id?: string | number;
+  id?: string | number | undefined;
 }
 
 /** A toggle in the grid corner menu. The page stores the checked state. */

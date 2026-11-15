@@ -27,7 +27,7 @@
         class="desk-currency-rate"
         inputmode="decimal"
         title="Rate: how many company-currency units equal 1 of this currency"
-        :readonly="!foreign || rateLocked"
+        :readonly="!foreign || rateLocked === true"
         :tabindex="foreign && !rateLocked ? 0 : -1"
         :value="rateText"
         @input="onRate"
