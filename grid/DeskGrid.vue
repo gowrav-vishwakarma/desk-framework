@@ -82,6 +82,7 @@
               v-for="column in visibleColumns"
               :key="column.id"
               class="column-filter"
+              :data-filter="column.id"
               :class="{ 'desk-filter-pending': filterDraft?.id === column.id }"
               @contextmenu="openHeaderFilter(column.id, $event)"
             >

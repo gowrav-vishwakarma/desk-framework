@@ -136,9 +136,22 @@ export async function deskRowActionStates(client: DeskClient, grid: string, colu
 }
 
 /**
+ * Filter a list column as a person does: click its filter box, type, Enter.
+ */
+export async function deskFilterColumn(page: DeskUserPage, client: DeskClient, grid: string, column: string, text: string): Promise<void> {
+  const box = page.locator(deskLocators.node(grid)).first().locator(`${deskLocators.filterCell(column)} input`).first();
+  await box.click();
+  await box.press('ControlOrMeta+a');
+  await box.pressSequentially(text, { delay: 20 });
+  await box.press('Enter');
+  await client.waitIdle();
+}
+
+/**
  * Run a row action as a person does: in the row whose cells show `text`, click the action's button (or ⋮, then the
  * menu item), then answer the confirm it opens by clicking `confirm-yes` (or `confirm-no` with `answer: 'no'`). An
- * action without a confirm runs at once. The row must be on screen (filter or page to it first).
+ * action without a confirm runs at once. The row is waited for; when it is not on screen and `column` is given, the
+ * column is filtered for it first (`deskFilterColumn`).
  */
 export async function deskRunRowAction(
   page: DeskUserPage,
@@ -146,16 +159,24 @@ export async function deskRunRowAction(
   grid: string,
   text: string,
   action: string,
-  answer: 'yes' | 'no' = 'yes',
+  options: { answer?: 'yes' | 'no'; column?: string } = {},
 ): Promise<void> {
-  // The cell showing exactly `text`, then its row.
-  const row = page
-    .locator(deskLocators.node(grid))
-    .first()
-    .locator(deskLocators.cellValue)
-    .filter({ hasText: new RegExp(`^\\s*${text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`) })
-    .first()
-    .locator('xpath=ancestor::tr[1]');
+  const answer = options.answer ?? 'yes';
+  const find = () =>
+    page
+      .locator(deskLocators.node(grid))
+      .first()
+      .locator(deskLocators.cellValue)
+      .filter({ hasText: new RegExp(`^\\s*${text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`) })
+      .first()
+      .locator('xpath=ancestor::tr[1]');
+  await client.waitIdle();
+  let row = find();
+  if ((await row.count()) === 0 && options.column) {
+    await deskFilterColumn(page, client, grid, options.column, text);
+    row = find();
+  }
+  for (let tries = 0; (await row.count()) === 0 && tries < 30; tries += 1) await new Promise((resolve) => setTimeout(resolve, 100));
   if ((await row.count()) === 0) throw new Error(`no row showing ${JSON.stringify(text)} on screen in ${grid}`);
   const button = row.locator(deskLocators.rowAction(action)).first();
   if (await button.count()) await button.click();

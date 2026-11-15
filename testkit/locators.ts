@@ -28,6 +28,8 @@ export const deskLocators = {
   gridRow: 'tbody tr',
   /** A grid cell by row index and column id (`data-cell` starts with the row, `data-col` is the column). */
   gridCell: (row: number, column: string): string => `td[data-col="${column}"][data-cell^="${row}-"]`,
+  /** A column's filter box in the grid's filter row. */
+  filterCell: (column: string): string => `td[data-filter="${column}"]`,
   /** The highlighted row of an open lookup list. */
   lookupActive: '.desk-suggest tr.hit.active',
   cellValue: '.desk-cell-value',

@@ -5,6 +5,7 @@ export {
   deskCountRows,
   deskFindRow,
   deskGrid,
+  deskFilterColumn,
   deskPageSize,
   deskPickInCell,
   deskRowActionStates,
