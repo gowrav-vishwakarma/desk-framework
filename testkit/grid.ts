@@ -185,8 +185,14 @@ export async function deskRunRowAction(
     await page.locator(deskLocators.menuItem(action)).first().click();
   }
   await client.waitIdle();
+  // An action that confirms opens its dialog a moment after the click: wait for it (`isVisible` does not wait), or a
+  // late dialog is left for someone else to answer and the action runs after the caller has moved on.
   const confirm = page.locator(deskLocators.field(answer === 'yes' ? 'confirm-yes' : 'confirm-no')).first();
-  if (await confirm.isVisible({ timeout: 1000 }).catch(() => false)) {
+  const asked = await confirm
+    .waitFor({ state: 'visible', timeout: 2000 })
+    .then(() => true)
+    .catch(() => false);
+  if (asked) {
     await confirm.click();
     await client.waitIdle();
   }
