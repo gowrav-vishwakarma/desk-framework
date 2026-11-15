@@ -226,6 +226,7 @@ export async function deskPickInCell(
   column: string,
   text: string,
   timeoutMs = 8000,
+  pickKey = 'Enter',
 ): Promise<void> {
   const cell = page.locator(deskLocators.node(grid)).first().locator(deskLocators.gridCell(row, column)).first();
   await cell.click();
@@ -238,7 +239,7 @@ export async function deskPickInCell(
     if (await active.count()) {
       const shown = (await active.innerText()).replace(/\s+/g, ' ').trim().toLowerCase();
       if (shown.includes(wanted) && !shown.includes('searching')) {
-        await page.keyboard.press('Enter');
+        await page.keyboard.press(pickKey);
         await client.waitIdle();
         return;
       }
@@ -250,6 +251,35 @@ export async function deskPickInCell(
     await new Promise((resolve) => setTimeout(resolve, 100));
   }
   throw new Error(`no lookup row showing ${JSON.stringify(text)} in ${grid} row ${row} ${column}`);
+}
+
+/**
+ * The keys of a multi-select lookup (several rows picked, the list stays open): which picks a row and which leaves the
+ * cell. Today Enter picks and Tab (or ← →) moves on; a desk setting is planned to offer Space to pick and Enter to move
+ * on: then only this changes, every spec picks through `deskPickManyInCell`.
+ */
+export const DESK_MULTI_PICK_KEYS = { pick: 'Enter', moveOn: 'Tab' };
+
+/**
+ * Pick several rows in a grid cell's multi-select lookup as a person does: for each text, type it and pick the row
+ * showing it; then leave the cell to the next one.
+ */
+export async function deskPickManyInCell(page: DeskUserPage, client: DeskClient, grid: string, row: number, column: string, texts: readonly string[], timeoutMs = 8000): Promise<void> {
+  for (const text of texts) await deskPickInCell(page, client, grid, row, column, text, timeoutMs, DESK_MULTI_PICK_KEYS.pick);
+  await page.keyboard.press(DESK_MULTI_PICK_KEYS.moveOn);
+  await client.waitIdle();
+}
+
+/**
+ * Type into a grid cell's text editor as a person does: click the cell (row index, column id) and type (the first key
+ * opens the editor and replaces what the cell held); Tab commits and moves on.
+ */
+export async function deskTypeInCell(page: DeskUserPage, client: DeskClient, grid: string, row: number, column: string, text: string): Promise<void> {
+  const cell = page.locator(deskLocators.node(grid)).first().locator(deskLocators.gridCell(row, column)).first();
+  await cell.click();
+  await cell.pressSequentially(text, { delay: 20 });
+  await page.keyboard.press('Tab');
+  await client.waitIdle();
 }
 
 /**
