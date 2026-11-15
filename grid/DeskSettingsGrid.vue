@@ -228,6 +228,11 @@ const focusAttrs = computed(() => (props.initial ? { 'data-desk-initial': '' } :
 const current = ref<string | null>(null);
 const editingKey = ref<string | null>(null);
 const draft = ref('');
+// Typing in an open cell clears its server problem at once (the form's own rules check the value again on
+// commit). Opening the editor seeds the draft in the same tick as the key changes: that is not typing.
+watch([draft, editingKey], ([text, key], [textBefore, keyBefore]) => {
+  if (key !== null && key === keyBefore && text !== textBefore) formIssues?.edited(key);
+});
 const lookupSeed = ref('');
 const fileBox = ref<HTMLInputElement | null>(null);
 /** Set when a lookup row was just chosen, so the following advance does not step twice. */
