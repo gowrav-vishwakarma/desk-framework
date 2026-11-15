@@ -1705,7 +1705,19 @@ body.desk-col-dragging {
   white-space: nowrap;
 }
 
-/* Problems no field on screen can show. They stay until the field appears or the problem is gone. */
+/* Problems no field on screen can show (`form/issueDisplay.ts` picks the strip or the toasts). They stay until the field appears or the problem is gone. */
+.desk-form-issues {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 10px;
+  margin-bottom: 4px;
+  background: var(--desk-row-bg);
+  border: 1px solid var(--desk-error);
+  border-left-width: 4px;
+  font-size: var(--desk-font);
+}
+
 .desk-toasts {
   position: fixed;
   right: 12px;

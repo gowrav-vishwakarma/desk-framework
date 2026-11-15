@@ -147,7 +147,7 @@ import { lookupField } from './lookupField';
 import { isDeskBlankHit } from './blank';
 import type { DeskFieldLabelStyle } from '../formLayout/types';
 import type { DeskCurrencyValue, DeskLookupConfig, DeskSelectOption } from '../grid/types';
-import { claimDeskKey, focusNextDeskField, focusPrevDeskField, selectDeskControl } from '../focus/useDeskFocus';
+import { claimDeskKey, focusDeskField, focusNextDeskField, focusPrevDeskField, selectDeskControl } from '../focus/useDeskFocus';
 import { keyInputOf, toCombo } from '../keys/combo';
 import { deskActionsFor, deskKeyLabel } from '../keys/deskKeymap';
 import { DESK_FORM_ISSUES } from './issues';
@@ -248,9 +248,9 @@ const invalid = computed(() => {
   return shown.value.trim() === '';
 });
 
-// The form learns this field is on screen, so its issue shows here and not as a toast.
+// The form learns this field is on screen (its issue shows here) and how to focus it (a server issue on it).
 watchEffect((onCleanup) => {
-  if (form) onCleanup(form.mount(props.fieldId));
+  if (form) onCleanup(form.mount(props.fieldId, focusSelf));
 });
 
 function onFocusOut(event: FocusEvent): void {
@@ -302,6 +302,14 @@ function onTab(event: KeyboardEvent): void {
 }
 
 const rootEl = ref<HTMLElement | null>(null);
+
+/** Focus this field: through its layer (the desk's focus rules), else its own control. */
+function focusSelf(): boolean {
+  if (focusDeskField(props.fieldId)) return true;
+  const control = rootEl.value?.querySelector<HTMLElement>('input, textarea, select, button');
+  control?.focus();
+  return control !== null && control !== undefined;
+}
 /** What the lookup box exposes to automation. Typed here because the box is generic, so its instance type is lost. */
 interface LookupBoxApi {
   automationSearch: (query: string) => Promise<Record<string, unknown>[]>;

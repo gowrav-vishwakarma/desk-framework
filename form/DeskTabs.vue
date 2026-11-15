@@ -31,6 +31,7 @@ import { DESK_PAGE_FRAME } from '../page/pageContext';
 import { deskTabGroups, type DeskTabItem, type TabGroup } from './deskTabGroup';
 import { isPendingPrefix, joinTabPath, splitTabPath, TAB_QUERY_KEY } from './deskTabRoute';
 import { DESK_FORM_DIRTY } from './formDirty';
+import { DESK_FORM_ISSUES } from './issues';
 import DeskNodeScope from '../automation/DeskNodeScope.vue';
 import { useDeskAutomationNode } from '../automation/registry';
 
@@ -64,6 +65,15 @@ const inPageDialog = inject(DESK_PAGE_FRAME, null) !== null;
 const slots = useSlots();
 /** Present inside a DeskForm with a tracker. A swap asks first when it would drop a dirty sub-form. */
 const formDirty = inject(DESK_FORM_DIRTY, null);
+// Inside a form, the strip tells it which tab holds a field (`fields`), so a server issue opens that tab.
+const formIssues = inject(DESK_FORM_ISSUES, null);
+if (formIssues) {
+  const stop = formIssues.tabs({
+    tabOf: (fieldId) => props.tabs.find((tab) => tab.fields?.includes(fieldId))?.id ?? null,
+    open: (tabId) => select(tabId),
+  });
+  onUnmounted(stop);
+}
 const paned = computed(() => Boolean(slots.default));
 const bar = ref<HTMLElement | null>(null);
 const pane = ref<HTMLElement | null>(null);

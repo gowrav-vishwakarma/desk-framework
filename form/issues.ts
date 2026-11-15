@@ -1,9 +1,10 @@
 import type { InjectionKey } from 'vue';
 
 /**
- * One problem a page wants the user to see. With a `fieldId` it shows on that field while the
- * field is on screen. Without one, or while the field is not mounted (a closed tab), it shows
- * as a toast until the field appears or the problem is gone.
+ * One problem a page wants the user to see. With a `fieldId` it shows under that field while the
+ * field is on screen. Without one, or while the field is not mounted (a closed tab no strip
+ * names, a field the page does not show), it shows in the form's header strip until the field
+ * appears or the problem is gone. A server issue on a field in a closed tab opens that tab.
  */
 export interface DeskIssue {
   message: string;
@@ -14,10 +15,25 @@ export interface DeskIssue {
 export interface DeskFormIssues {
   /** The message for a field, or null. */
   issueFor(fieldId: string): string | null;
-  /** A field announces itself when it mounts. Call the result when it unmounts. */
-  mount(fieldId: string): () => void;
+  /**
+   * A field announces itself when it mounts, with how to focus it (a server issue on it takes the
+   * focus there). Call the result when it unmounts.
+   */
+  mount(fieldId: string, focus?: () => boolean): () => void;
+  /**
+   * A tab strip inside the form names the tab that holds a field (`DeskTabItem.fields`) and opens
+   * it: a server issue on a field in a closed tab opens that tab, then focuses the field.
+   */
+  tabs(holder: DeskIssueTabs): () => void;
   /** The user changed this field, so its server error hides until the next save. */
   edited(fieldId: string): void;
+}
+
+/** A tab strip as the form sees it. */
+export interface DeskIssueTabs {
+  /** The tab holding this field, or null. */
+  tabOf(fieldId: string): string | null;
+  open(tabId: string): void;
 }
 
 export const DESK_FORM_ISSUES: InjectionKey<DeskFormIssues> = Symbol('desk-form-issues');

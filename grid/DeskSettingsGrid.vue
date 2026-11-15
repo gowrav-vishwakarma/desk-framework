@@ -753,10 +753,19 @@ async function fillEmptyCurrency(): Promise<void> {
   }
 }
 
-// Each visible key is a field, so an issue for it shows on the cell instead of as a toast.
+// Each visible key is a field, so an issue for it shows on the cell; a server issue on it puts the cursor there.
 watchEffect((onCleanup) => {
   if (!formIssues) return;
-  const stops = [...settings.value.keys()].map((key) => formIssues.mount(key));
+  const stops = [...settings.value.keys()].map((key) =>
+    formIssues.mount(key, () => {
+      const cell = cells.value.find((item) => item.key === key);
+      if (!cell || !scroller.value) return false;
+      moveTo(cell);
+      scroller.value.focus();
+      scroller.value.querySelector<HTMLElement>(`[data-setting="${CSS.escape(key)}"]`)?.scrollIntoView({ block: 'nearest' });
+      return true;
+    }),
+  );
   onCleanup(() => {
     for (const stop of stops) stop();
   });

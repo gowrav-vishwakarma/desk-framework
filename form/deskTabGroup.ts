@@ -5,6 +5,8 @@ export interface DeskTabItem {
   label: string;
   disabled?: boolean;
   title?: string;
+  /** Field ids in this tab's pane: a server issue on one of them opens the tab and focuses it. */
+  fields?: readonly string[];
 }
 
 /** One tab strip. A strip inside another's pane is its child, so the keys walk depth-first. */
