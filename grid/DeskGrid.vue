@@ -340,7 +340,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, getCurrentInstance, nextTick, onMounted, onUnmounted, reactive, ref, useSlots, watch } from 'vue';
+import { computed, getCurrentInstance, inject, nextTick, onMounted, onUnmounted, reactive, ref, useSlots, watch } from 'vue';
+import { DESK_FORM_ISSUES } from '../form/issues';
 import { useVirtualizer } from '@tanstack/vue-virtual';
 import { deskHost } from '../host';
 import { plainText } from '../automation/text';
@@ -679,6 +680,17 @@ const lookupPick = ref<Record<string, unknown> | null>(null);
 const selectedRows = ref<Set<number>>(new Set());
 const scroller = ref<HTMLElement | null>(null);
 const gridId = props.fieldId || autoDeskFieldId('grid');
+
+/** The form around the grid: a server refusal under the grid's field id steps aside once the user edits the grid (as a settings row's does). */
+const formIssues = inject(DESK_FORM_ISSUES, null);
+function userEdited(): void {
+  if (props.fieldId) formIssues?.edited(props.fieldId);
+}
+/** A cell the user changed: tell the page, and the form. */
+function changed(payload: { row: number; columnId: string; value: unknown; record: DeskGridRow }): void {
+  emit('change', payload);
+  userEdited();
+}
 const displayOnly = computed(() => props.displayOnly === true);
 
 const focusAttrs = computed(() => {
@@ -1917,7 +1929,7 @@ function writeCell(rowIndex: number, column: DeskColumn, value: unknown): void {
   } else {
     row[column.id] = value;
   }
-  emit('change', { row: rowIndex, columnId: column.id, value, record: row });
+  changed({ row: rowIndex, columnId: column.id, value, record: row });
 }
 
 function commitEdit(advance: boolean, force = false, refocus = true): void {
@@ -1953,7 +1965,7 @@ function toggleLookup(record: Record<string, unknown>): void {
   const row = rowAt(cursor.value.row);
   if (!column?.commit || !row) return;
   column.commit(row, '', record);
-  emit('change', { row: cursor.value.row, columnId: column.id, value: record, record: row });
+  changed({ row: cursor.value.row, columnId: column.id, value: record, record: row });
 }
 
 function commitLookup(via: 'enter' | 'tab' | 'back' | 'backEnter' | 'stay' = 'enter'): void {
@@ -1965,11 +1977,11 @@ function commitLookup(via: 'enter' | 'tab' | 'back' | 'backEnter' | 'stay' = 'en
   if (column && row && (pick || typed)) {
     if (column.commit) {
       column.commit(row, blank ? '' : draft.value, blank ? null : pick);
-      emit('change', { row: cursor.value.row, columnId: column.id, value: blank ? null : draft.value, record: row });
+      changed({ row: cursor.value.row, columnId: column.id, value: blank ? null : draft.value, record: row });
     } else if (blank) {
       row[column.id] = null;
       row[`${column.id}Id`] = null;
-      emit('change', { row: cursor.value.row, columnId: column.id, value: null, record: row });
+      changed({ row: cursor.value.row, columnId: column.id, value: null, record: row });
     } else if (pick) {
       writeCell(cursor.value.row, column, pick);
       const valueKey = resolveColumnLookup(column, row)?.valueKey ?? 'id';
@@ -2246,12 +2258,13 @@ function deleteRow(): void {
     const next = rows.value.slice();
     next[index] = cleared;
     rows.value = next;
-    emit('change', { row: index, columnId: props.columns[0]?.id ?? '', value: null, record: cleared });
+    changed({ row: index, columnId: props.columns[0]?.id ?? '', value: null, record: cleared });
     return;
   }
   const next = rows.value.slice();
   next.splice(index, 1);
   rows.value = next;
+  userEdited();
   void moveTo(Math.max(0, index - 1), cursor.value.col, false);
 }
 
