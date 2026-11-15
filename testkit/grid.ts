@@ -251,3 +251,27 @@ export async function deskPickInCell(
   }
   throw new Error(`no lookup row showing ${JSON.stringify(text)} in ${grid} row ${row} ${column}`);
 }
+
+/**
+ * Whether the user is offered an action, from a row's or a toolbar's action states (`deskRowActionStates`): the one
+ * rule every check uses. Today an action the user may not run is either disabled or not drawn, and an action may sit
+ * in the button group or in the ⋮ menu: all of that is "withheld" / "offered" here, so when the desk's display choice
+ * changes (a setting to hide or disable, buttons or menu) only this function does.
+ */
+export function deskOffers(states: Record<string, boolean | undefined>, action: string): boolean {
+  return states[action] === true;
+}
+
+/** The opposite of `deskOffers`: the action is disabled or not drawn at all. */
+export function deskWithholds(states: Record<string, boolean | undefined>, action: string): boolean {
+  return !deskOffers(states, action);
+}
+
+/**
+ * Whether the page offers a toolbar button (Add New is `add-new`): the page's `actions` lists only buttons drawn and
+ * enabled, so "offered" is "listed" (the same rule as `deskOffers`).
+ */
+export async function deskToolbarOffers(client: DeskClient, id: string): Promise<boolean> {
+  const listed = (await client.act('top', 'actions')) as { result?: { buttons?: Array<{ id?: string; label?: string }> } };
+  return (listed.result?.buttons ?? []).some((button) => button.id === id || button.label === id);
+}
