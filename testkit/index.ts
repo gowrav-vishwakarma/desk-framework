@@ -14,6 +14,8 @@ export {
   deskPickManyInCell,
   DESK_MULTI_PICK_KEYS,
   deskTypeInCell,
+  deskChooseInCell,
+  deskEditCell,
   deskRowActionStates,
   deskRunRowAction,
   deskRunRowActionDirect,

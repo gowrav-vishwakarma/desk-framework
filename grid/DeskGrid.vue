@@ -3443,6 +3443,7 @@ useDeskAutomationNode({
           id: column.id,
           header: column.header,
           editor: column.editor ?? column.type ?? 'text',
+          ...(column.multiple === true ? { multiple: true } : {}),
           readonly: typeof column.readonly === 'function' ? 'by row' : column.readonly === true,
           pinned: column.pin ?? null,
           width: columnLayout.effectiveWidth(column.id),

@@ -270,6 +270,48 @@ export async function deskPickManyInCell(page: DeskUserPage, client: DeskClient,
   await client.waitIdle();
 }
 
+/** A grid column as the automation state shows it: its editor kind and whether its lookup picks several rows. */
+interface DeskGridColumnView {
+  id: string;
+  editor: string;
+  multiple?: boolean;
+}
+
+async function gridColumn(client: DeskClient, grid: string, column: string): Promise<DeskGridColumnView> {
+  const snap = (await client.snapshot({ path: grid, depth: 1 })) as Array<{ state?: { columns?: DeskGridColumnView[] } }>;
+  const found = snap[0]?.state?.columns?.find((c) => c.id === column);
+  if (!found) throw new Error(`${grid} has no column ${column}`);
+  return found;
+}
+
+/**
+ * Choose a grid cell's option (a select or a Yes/No check) as a person does: click the cell, type the option's label
+ * (the first key opens the editor and filters the options), Enter picks it and moves on.
+ */
+export async function deskChooseInCell(page: DeskUserPage, client: DeskClient, grid: string, row: number, column: string, label: string): Promise<void> {
+  const cell = page.locator(deskLocators.node(grid)).first().locator(deskLocators.gridCell(row, column)).first();
+  await cell.click();
+  await cell.pressSequentially(label, { delay: 20 });
+  await page.keyboard.press('Enter');
+  await client.waitIdle();
+}
+
+/**
+ * Edit a grid cell as a person does, whatever its editor (read from the grid): a text, number or date is typed and
+ * committed; a select or check is chosen by its label; a lookup is picked by the row showing the text; a lookup that
+ * picks several takes each text, then moves on. Specs name the value, not the editor: a column that changes editor
+ * keeps its specs.
+ */
+export async function deskEditCell(page: DeskUserPage, client: DeskClient, grid: string, row: number, column: string, value: string | readonly string[]): Promise<void> {
+  const view = await gridColumn(client, grid, column);
+  const values = typeof value === 'string' ? [value] : value;
+  if (view.editor === 'lookup' && view.multiple) return deskPickManyInCell(page, client, grid, row, column, values);
+  const one = values[0] ?? '';
+  if (view.editor === 'lookup') return deskPickInCell(page, client, grid, row, column, one);
+  if (view.editor === 'select' || view.editor === 'check') return deskChooseInCell(page, client, grid, row, column, one);
+  return deskTypeInCell(page, client, grid, row, column, one);
+}
+
 /**
  * Type into a grid cell's text editor as a person does: click the cell (row index, column id) and type (the first key
  * opens the editor and replaces what the cell held); Tab commits and moves on.
