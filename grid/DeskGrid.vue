@@ -3391,10 +3391,11 @@ function automationCell(row: DeskGridRow, column: DeskColumn): { value: unknown;
   return { value: raw ?? null, shown: text };
 }
 
-function automationRowActions(row: DeskGridRow): { name: string; label: string; enabled: boolean; reason: string }[] {
+function automationRowActions(row: DeskGridRow): { name: string; label: string; enabled: boolean; reason: string; denied?: true }[] {
   return (props.rowActions?.(row) ?? []).map((action) => ({
     name: action.name,
     label: action.label,
+    ...(action.denied ? { denied: true as const } : {}),
     enabled: !action.disabled && action.missingData !== true,
     reason: action.disabled || action.missingData ? (action.title ?? (action.missingData ? 'the active layout does not load a field this action needs' : 'not available')) : '',
   }));

@@ -708,6 +708,18 @@ body.desk-col-dragging {
   background: #fdeeee;
   cursor: not-allowed;
 }
+/* Not permitted: the owner or an administrator has not given this right. Apart from the plain disabled look, which
+   means this record cannot take the action. */
+.desk-grid .actions-col button.desk-action-denied:disabled,
+.desk-toolbar button.desk-action-denied:disabled,
+.desk-page button.desk-action-denied:disabled,
+.desk-footer-bar button.desk-action-denied:disabled,
+.desk-context-menu .desk-grid-menu-item.desk-action-denied:disabled {
+  color: var(--desk-denied);
+  border-color: var(--desk-denied-line);
+  background: var(--desk-denied-bg);
+  cursor: not-allowed;
+}
 
 .desk-grid .footer {
   min-height: var(--desk-footer-height);

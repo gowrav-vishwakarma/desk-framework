@@ -2,6 +2,10 @@ export interface DeskHeaderButton {
   id: string;
   label: string;
   disabled: boolean;
+  /** Not permitted for this user (`data-desk-denied`), apart from a button that is only unavailable now. */
+  denied?: true;
+  /** Why it is disabled, as its tooltip says. */
+  reason?: string;
 }
 
 const slug = (text: string): string => text.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
@@ -17,7 +21,9 @@ function visibleButtons(root: HTMLElement | null): { el: HTMLElement; button: De
     .map((el) => {
       const label = (el.getAttribute('aria-label') ?? el.textContent ?? '').replace(/\s+/g, ' ').trim();
       const disabled = el.hasAttribute('disabled') || el.getAttribute('aria-disabled') === 'true';
-      return { el, button: { id: buttonId(el, label), label, disabled } };
+      const reason = disabled ? el.getAttribute('title') ?? undefined : undefined;
+      const denied = el.dataset.deskDenied === 'true' ? ({ denied: true } as const) : {};
+      return { el, button: { id: buttonId(el, label), label, disabled, ...denied, ...(reason ? { reason } : {}) } };
     });
 }
 
@@ -31,7 +37,7 @@ export function pressHeaderButton(root: HTMLElement | null, target: string): { o
   const all = visibleButtons(root);
   const hit = all.find((item) => item.button.id.toLowerCase() === wanted) ?? all.find((item) => item.button.label.toLowerCase() === wanted);
   if (!hit) return { ok: false, error: `no header button ${target}`, reason: `buttons: ${all.map((item) => `${item.button.id} (${item.button.label})`).join(' | ') || 'none'}` };
-  if (hit.button.disabled) return { ok: false, error: `${hit.button.label} is disabled right now` };
+  if (hit.button.disabled) return { ok: false, error: `${hit.button.label} is disabled right now`, ...(hit.button.reason ? { reason: hit.button.reason } : {}) };
   hit.el.click();
   return { ok: true, pressed: hit.button.id };
 }

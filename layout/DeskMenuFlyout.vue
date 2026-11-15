@@ -5,7 +5,7 @@
       <button
         v-else
         type="button"
-        :class="{ on: path[0] === index }"
+        :class="{ on: path[0] === index, [`desk-menu-refused-${item.refused}`]: Boolean(item.refused) }"
         :title="item.hint ?? ''"
         @mouseenter="onHover(index)"
         @click="choose(item, index)"
@@ -20,6 +20,7 @@
             <template v-else>{{ part.text }}</template>
           </template>
         </span>
+        <svg v-if="item.refused" class="desk-flyout-end desk-flyout-refused" viewBox="0 0 16 16" aria-hidden="true"><path :d="DESK_MENU_ICONS[item.refused === 'plan' ? 'plan' : 'lock']" /></svg>
         <svg v-if="item.endIcon" class="desk-flyout-end" viewBox="0 0 16 16" aria-hidden="true"><path :d="DESK_MENU_ICONS[item.endIcon]" /></svg>
         <span v-if="item.children?.length" class="desk-flyout-more">▸</span>
       </button>
@@ -156,6 +157,14 @@ function choose(item: DeskMenuNode, index: number): void {
 }
 .desk-flyout-end {
   color: var(--desk-muted, #6c757d);
+}
+/* Shown but refused: not permitted (denied colours, padlock) or not in the plan (alert tone, tag). */
+.desk-flyout-row > button.desk-menu-refused-permission,
+.desk-flyout-row > button.desk-menu-refused-permission .desk-flyout-refused {
+  color: var(--desk-denied, #6b4fa0);
+}
+.desk-flyout-row > button.desk-menu-refused-plan .desk-flyout-refused {
+  color: var(--desk-tone-alert, #b45309);
 }
 .desk-flyout-more {
   color: var(--desk-muted, #6c757d);

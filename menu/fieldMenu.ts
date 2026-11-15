@@ -9,6 +9,8 @@ export interface DeskMenuItem {
   title?: string;
   /** Adds `desk-tone-<tone>` on the menu row. */
   tone?: string;
+  /** Not permitted for this user (`desk-action-denied`): disabled in the theme's denied colours. */
+  denied?: boolean;
 }
 
 /**

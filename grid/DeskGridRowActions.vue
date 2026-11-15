@@ -6,6 +6,7 @@
     :class="deskActionClass(action)"
     :disabled="action.disabled"
     :data-desk-action="action.name"
+    :data-desk-denied="action.denied ? 'true' : undefined"
     v-bind="action.title ? { title: action.title } : {}"
     @click="emit('action', action.name)"
   >
@@ -55,6 +56,7 @@ const ctx = useDeskContextMenu(() => {
           id: action.name,
           label: action.label,
           disabled: action.disabled,
+          ...(action.denied ? { denied: true } : {}),
           ...(action.title ? { title: action.title } : {}),
           ...(action.tone ? { tone: action.tone } : {}),
         })),

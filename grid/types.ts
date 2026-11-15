@@ -403,6 +403,11 @@ export interface DeskRowAction {
   title?: string;
   /** The active layout does not load a field this action needs. Shown disabled in light red. */
   missingData?: boolean;
+  /**
+   * The user was not given the right to this action (the owner or an administrator can give it). Shown disabled in the
+   * theme's `--desk-denied` colours, apart from an action this record cannot take; `title` says why.
+   */
+  denied?: boolean;
   /** Adds `desk-tone-<tone>`. Themes colour it. */
   tone?: DeskActionTone;
   /** Extra classes from the host, added as given. */

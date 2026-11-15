@@ -8,7 +8,7 @@
           :key="`${group.id}:${item.id}`"
           type="button"
           class="desk-grid-menu-item"
-          :class="[isActive(group.id, item.id) ? 'on' : '', item.tone ? `desk-tone-${item.tone}` : '']"
+          :class="[isActive(group.id, item.id) ? 'on' : '', item.tone ? `desk-tone-${item.tone}` : '', item.denied ? 'desk-action-denied' : '']"
           :disabled="item.disabled === true"
           :title="item.title ?? ''"
           :data-desk-menu-item="item.id"
@@ -137,7 +137,7 @@ useDeskAutomationNode({
       id: group.id,
       label: group.label ?? '',
       mode: group.mode ?? 'pick',
-      items: group.items.map((item) => ({ id: item.id, label: item.label, checked: item.checked === true, disabled: item.disabled === true, ...(item.title ? { reason: item.title } : {}) })),
+      items: group.items.map((item) => ({ id: item.id, label: item.label, checked: item.checked === true, disabled: item.disabled === true, ...(item.denied ? { denied: true } : {}), ...(item.title ? { reason: item.title } : {}) })),
     })),
     highlighted: flat.value[active.value]?.item.label ?? null,
   }),

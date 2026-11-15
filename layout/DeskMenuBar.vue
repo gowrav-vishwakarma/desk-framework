@@ -4,7 +4,8 @@
       <button
         :ref="(el) => rememberTop(index, el)"
         type="button"
-        :class="{ on: topOn(index) }"
+        :class="{ on: topOn(index), [`desk-menu-refused-${item.refused}`]: Boolean(item.refused) }"
+        :title="item.hint ?? ''"
         @click="onTop(item, index)"
       >
         <template v-for="(part, partIndex) in splitAccessLabel(item.label, item.letter)" :key="partIndex">
@@ -356,6 +357,9 @@ useDeskAutomationNode({
 .desk-menu-item > button.on {
   background: var(--desk-menu-on-bg, #fff);
   border: 1px solid var(--desk-grid-line, lightgray);
+}
+.desk-menu-item > button.desk-menu-refused-permission {
+  color: var(--desk-denied, #6b4fa0);
 }
 .desk-menu :slotted(button) {
   height: 26px;

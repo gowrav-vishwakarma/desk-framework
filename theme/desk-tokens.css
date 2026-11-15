@@ -30,6 +30,10 @@
   --desk-star: #d4a017;
   --desk-error: #c0392b;
   --desk-invalid-bg: #fdecea;
+  /* Not permitted (the user was not given the right): text, background and border of a denied action. */
+  --desk-denied: #6b4fa0;
+  --desk-denied-bg: #f3effa;
+  --desk-denied-line: #d8ccef;
   --desk-danger: var(--desk-error);
   --desk-danger-bg: var(--desk-invalid-bg);
   --desk-hover-bg: #e9ecef;
@@ -74,6 +78,9 @@
   --desk-star: #e0b15a;
   --desk-error: #f07167;
   --desk-invalid-bg: #3a2422;
+  --desk-denied: #c3aef0;
+  --desk-denied-bg: #2b2636;
+  --desk-denied-line: #4d4363;
   --desk-hover-bg: #3a4046;
   --desk-menu-on-bg: #353b41;
   --desk-range-bg: #2c3a2c;
@@ -102,6 +109,9 @@
   --desk-star: #c4922a;
   --desk-error: #b33a32;
   --desk-invalid-bg: #fbeceb;
+  --desk-denied: #5a4a9c;
+  --desk-denied-bg: #f0eef9;
+  --desk-denied-line: #cfc8ea;
   --desk-hover-bg: #dce6f1;
   --desk-menu-on-bg: #ffffff;
   --desk-range-bg: #d4e4f2;
@@ -130,6 +140,9 @@
   --desk-star: #c4922a;
   --desk-error: #b33a32;
   --desk-invalid-bg: #fbeceb;
+  --desk-denied: #66508f;
+  --desk-denied-bg: #f3f0f6;
+  --desk-denied-line: #d5cbe3;
   --desk-hover-bg: #dce6d8;
   --desk-menu-on-bg: #fffcf6;
   --desk-range-bg: #d5e6d2;
@@ -158,6 +171,9 @@
   --desk-star: #b07a3c;
   --desk-error: #a33b2b;
   --desk-invalid-bg: #fbe8e4;
+  --desk-denied: #74508a;
+  --desk-denied-bg: #f6eef3;
+  --desk-denied-line: #dcc7d6;
   --desk-hover-bg: #eadcc8;
   --desk-menu-on-bg: #fffdf8;
   --desk-range-bg: #efe0c8;
@@ -186,6 +202,9 @@
   --desk-star: #c4922a;
   --desk-error: #b33a32;
   --desk-invalid-bg: #fbeceb;
+  --desk-denied: #5d5296;
+  --desk-denied-bg: #efeef7;
+  --desk-denied-line: #cdc9e4;
   --desk-hover-bg: #d8dee4;
   --desk-menu-on-bg: #ffffff;
   --desk-range-bg: #d5dee6;
@@ -219,6 +238,9 @@
   --desk-star: #e0b15a;
   --desk-error: #ff8a80;
   --desk-invalid-bg: #3a2228;
+  --desk-denied: #b4a6ff;
+  --desk-denied-bg: #1c1a38;
+  --desk-denied-line: #3b3670;
   --desk-hover-bg: #1c2c44;
   --desk-menu-on-bg: #1a2940;
   --desk-range-bg: #16304e;
@@ -247,6 +269,9 @@
   --desk-star: #c4922a;
   --desk-error: #b33a32;
   --desk-invalid-bg: #fbeceb;
+  --desk-denied: #5d4e9a;
+  --desk-denied-bg: #efedf8;
+  --desk-denied-line: #ccc6e6;
   --desk-hover-bg: rgba(255, 255, 255, 0.55);
   --desk-menu-on-bg: rgba(255, 255, 255, 0.88);
   --desk-range-bg: #d5e2ea;

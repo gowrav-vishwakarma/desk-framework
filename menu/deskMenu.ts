@@ -19,6 +19,11 @@ export interface DeskMenuNode {
   checked?: boolean;
   /** A line between rows. Arrows step over it. */
   separator?: boolean;
+  /**
+   * Shown but refused: `permission` (the user was not given the right; the theme's denied colours and a padlock) or
+   * `plan` (not in the company's plan; a tag). The row still opens, and the page says why; `hint` says it on hover.
+   */
+  refused?: 'permission' | 'plan';
 }
 
 export interface DeskMenuLetterResult {
