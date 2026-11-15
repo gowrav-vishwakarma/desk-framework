@@ -32,7 +32,7 @@ test('open the account list', async ({ page, user, desk }) => {
 Nothing here is specific to a product. A product's own helpers (voucher steps, company setup, SQL) live in its own
 test project and build on these.
 
-A list grid exposes `pageSize` (`{ size: 1000 }` or `{ size: 'all' }`). `deskPageSize` runs that op.
+A list grid exposes `pageSize` (`{ size: 50 }`). `deskCountRows` checks the paginator's count on one page. `deskPageSize` runs that op.
 `deskCountRows` then checks a numeric page and All against a total the caller already knows.
 `deskFindRow(client, grid, columnId, text)` filters that column and returns the row.
 `deskActions` reads that row's actions. It uses the row index, because a numeric string is an index, not a key.

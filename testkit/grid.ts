@@ -57,8 +57,8 @@ export function deskCellShown(row: DeskShownRow, column: string): string {
 }
 
 /**
- * Set the footer page size. `size` must be one the grid offers (`20`, `1000`, `'all'`, `'dynamic'`, `'infinite'`).
- * All posts no limit. A grid that hides All refuses `'all'` and names the sizes it does offer.
+ * Set the footer page size. `size` must be one the grid offers (`20`, `50`, `'dynamic'`, `'all'`…).
+ * A grid refuses a size it does not offer and names the ones it does.
  */
 export async function deskPageSize(client: DeskClient, grid: string, size: number | 'dynamic' | 'infinite' | 'all'): Promise<void> {
   expectOk(await client.act(grid, 'pageSize', { size }), `page size ${String(size)} on ${grid}`);
@@ -83,20 +83,19 @@ export async function deskUntilRowCount(client: DeskClient, grid: string, expect
 }
 
 /**
- * Show a numeric page, then All, and require the loaded rows to match `total`.
- * A page smaller than `total` is full (`pageSize` rows). All must show every row.
- * `pageSize` defaults to 1000, which these lists offer. Pass another size when a grid does not.
+ * A list's rows against `total`: the paginator reports `total` (the server count) and a page of `pageSize` shows
+ * `min(total, pageSize)` rows. Server lists page (the ops list bridge never reads them all), so the count is the check.
  */
 export async function deskCountRows(
   client: DeskClient,
   grid: string,
   total: number,
-  pageSize: number = 1000,
+  pageSize: number = 50,
 ): Promise<void> {
   await deskPageSize(client, grid, pageSize);
   await deskUntilRowCount(client, grid, Math.min(total, pageSize));
-  await deskPageSize(client, grid, 'all');
-  await deskUntilRowCount(client, grid, total);
+  const read = await client.read<DeskGridView>(grid);
+  if (read.itemCount !== total) throw new Error(`the list reports ${String(read.itemCount)} rows; expected ${total}`);
 }
 
 /**
