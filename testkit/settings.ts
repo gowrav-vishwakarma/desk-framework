@@ -39,7 +39,7 @@ export async function deskFormValues(client: DeskClient, settingsPath: string, g
   const out: DeskFormValues = { rows: {}, grids: {} };
   for (const [key, row] of Object.entries(rows)) out.rows[key] = { value: row.value, shown: String(row.shown ?? ''), ...(row.editor ? { editor: row.editor } : {}) };
   for (const grid of grids) {
-    const read = (await client.read(grid));
+    const read = await client.read<{ rows?: Array<{ cells?: Record<string, { shown?: string }> }> }>(grid);
     out.grids[grid.replace(/^.*\/grid:/, '')] = (read.rows ?? [])
       .map((row) => Object.values(row.cells ?? {}).map((cell) => (cell.shown ?? '').trim()).filter(Boolean).join(' | '))
       .filter(Boolean)
