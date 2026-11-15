@@ -1,5 +1,7 @@
 import { expectOk } from './user';
 import type { DeskClient } from './client';
+import { deskLocators } from './locators';
+import type { DeskUserPage } from './types';
 
 /**
  * A row as the grid draws it. `cells` is keyed by the column id the page gave that column.
@@ -125,4 +127,68 @@ export async function deskActions(client: DeskClient, grid: string, row: { index
   if (typeof row.index !== 'number') throw new Error('deskActions needs the row index from the grid read');
   const outcome = expectOk(await client.act(grid, 'rowActions', { row: row.index }), `row actions on ${grid}`);
   return (outcome.result ?? []) as DeskActionState[];
+}
+
+/** The actions of the row whose `column` shows `text`, as `{ name: enabled }` (find, then read its actions). */
+export async function deskRowActionStates(client: DeskClient, grid: string, column: string, text: string): Promise<Record<string, boolean>> {
+  const row = await deskFindRow(client, grid, column, text);
+  return Object.fromEntries((await deskActions(client, grid, row)).map((action) => [action.name, action.enabled]));
+}
+
+/**
+ * Run a row action as a person does: in the row whose cells show `text`, click the action's button (or ⋮, then the
+ * menu item), then answer the confirm it opens by clicking `confirm-yes` (or `confirm-no` with `answer: 'no'`). An
+ * action without a confirm runs at once. The row must be on screen (filter or page to it first).
+ */
+export async function deskRunRowAction(
+  page: DeskUserPage,
+  client: DeskClient,
+  grid: string,
+  text: string,
+  action: string,
+  answer: 'yes' | 'no' = 'yes',
+): Promise<void> {
+  // The cell showing exactly `text`, then its row.
+  const row = page
+    .locator(deskLocators.node(grid))
+    .first()
+    .locator(deskLocators.cellValue)
+    .filter({ hasText: new RegExp(`^\\s*${text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`) })
+    .first()
+    .locator('xpath=ancestor::tr[1]');
+  if ((await row.count()) === 0) throw new Error(`no row showing ${JSON.stringify(text)} on screen in ${grid}`);
+  const button = row.locator(deskLocators.rowAction(action)).first();
+  if (await button.count()) await button.click();
+  else {
+    await row.locator(deskLocators.rowMore).first().click();
+    await page.locator(deskLocators.menuItem(action)).first().click();
+  }
+  await client.waitIdle();
+  const confirm = page.locator(deskLocators.field(answer === 'yes' ? 'confirm-yes' : 'confirm-no')).first();
+  if (await confirm.isVisible({ timeout: 1000 }).catch(() => false)) {
+    await confirm.click();
+    await client.waitIdle();
+  }
+}
+
+/**
+ * The fast form of `deskRunRowAction`, for a step a person-like test has already covered: the grid's `runRowAction`
+ * op on the row, then the confirm answered through the dialog's `answer` op.
+ */
+export async function deskRunRowActionDirect(
+  client: DeskClient,
+  grid: string,
+  column: string,
+  text: string,
+  action: string,
+  answer: 'yes' | 'no' = 'yes',
+): Promise<void> {
+  const row = await deskFindRow(client, grid, column, text);
+  if (typeof row.index !== 'number') throw new Error(`no row index for ${text}`);
+  expectOk(await client.act(grid, 'runRowAction', { row: row.index, name: action }), `row action ${action} on ${text}`);
+  await client.waitIdle();
+  if ((await client.describe('top')).path.startsWith('dialog:')) {
+    expectOk(await client.act('top', 'answer', { choice: answer }), `answer ${answer} to ${action}`);
+    await client.waitIdle();
+  }
 }

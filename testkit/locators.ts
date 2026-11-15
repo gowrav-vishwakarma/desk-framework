@@ -18,4 +18,13 @@ export const deskLocators = {
   pivotWell: (area: string): string => `[data-desk-pivot-well="${area}"]`,
   /** A control by its stable id, as the page names it (`data-desk-field`). */
   field: (id: string): string => `[data-desk-field="${id}"]`,
+  /** A row's action button by action name (`edit`, `delete`, `deactivateCharge`), inside that row. */
+  rowAction: (name: string): string => `[data-desk-action="${name}"]`,
+  /** A row's "More actions" (⋮) button, inside that row. */
+  rowMore: '.desk-row-actions-more',
+  /** An item of the open context menu by its id. */
+  menuItem: (id: string): string => `.desk-context-menu [data-desk-menu-item="${id}"]`,
+  /** A grid row (body) and the text of its cells. */
+  gridRow: 'tbody tr',
+  cellValue: '.desk-cell-value',
 } as const;

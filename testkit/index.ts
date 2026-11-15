@@ -6,12 +6,16 @@ export {
   deskFindRow,
   deskGrid,
   deskPageSize,
+  deskRowActionStates,
+  deskRunRowAction,
+  deskRunRowActionDirect,
   deskUntilRowCount,
   type DeskActionState,
   type DeskGridView,
   type DeskShownRow,
 } from './grid';
 export { deskLocators } from './locators';
+export { deskSettingsIssues, deskSettingsRows, type DeskSettingsRowView } from './settings';
 export { createDeskUser, describeOutcome, expectOk, type DeskUser } from './user';
 export { deskFixtureDefs, type DeskFixtures, type ExtendableTest } from './fixtures';
 export { deskMcpTools, type DeskMcpTool } from './mcp';

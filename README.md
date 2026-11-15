@@ -22,7 +22,7 @@ If one change needs both, implement the mechanism in the framework and pass the 
 
 ## Driving a page
 
-Support AI and any other agent drive an open desk page through `window.__desk` (`automation/driver.ts`). Do not click grid cells. The same calls are the testkit in `testkit/README.md`.
+Support AI and any other agent drive an open desk page through `window.__desk` (`automation/driver.ts`); an agent does not click grid cells. Tests use the testkit (`testkit/README.md`) both ways: a page's own test acts as a person (clicks and keys on the stable selectors the framework stamps: `data-desk-path`, `data-desk-field`, `data-setting`, `data-desk-action`, `data-desk-menu-item`), and later tests that only need the page as a step use the driver's ops (`…Direct` helpers) to go fast. Reading state always goes through the driver.
 
 The driver is installed only while the host's `automation.enabled()` is true. Ankpal's company shell sets `window.__DESK_AUTOMATION__ = true` before setup, so `__desk` is there after sign-in. A test can also open `?deskAutomation=1` (kept for the tab) or set `localStorage.deskAutomation = '1'`.
 
@@ -595,6 +595,7 @@ A layout can save one sort and several column filters in `view`, plus `hideActio
 - `select`, `save`, Reset, Delete of the active layout, and the first prefs load apply the view. Prefs are part of `ready`, so the first request already carries it. Without a saved sort the list is `id` descending.
 - The view holds starting values only. The user can change or clear them; opening the layout again brings them back. The saved layout does not change.
 - `hideActions` hides the row actions column. Default can never set it. Enter, double-click, and toolbar actions still work.
+- Each row action button carries `data-desk-action="<action name>"` and each context-menu item `data-desk-menu-item="<item id>"`, so tests click them by name (testkit `deskLocators.rowAction`, `deskLocators.menuItem`, `deskRunRowAction`).
 - In the designer, "When this layout opens" picks the sort from columns that can sort and the filters from columns that can filter, with the same form as the header filter popup (`DeskFilterEditor`). Removing a column, or clearing its Sort by or Filter on, removes the view entries that used it.
 
 ### Export and import

@@ -5,6 +5,7 @@
     type="button"
     :class="deskActionClass(action)"
     :disabled="action.disabled"
+    :data-desk-action="action.name"
     v-bind="action.title ? { title: action.title } : {}"
     @click="emit('action', action.name)"
   >

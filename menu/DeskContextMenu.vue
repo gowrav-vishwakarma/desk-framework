@@ -11,6 +11,7 @@
           :class="[isActive(group.id, item.id) ? 'on' : '', item.tone ? `desk-tone-${item.tone}` : '']"
           :disabled="item.disabled === true"
           :title="item.title ?? ''"
+          :data-desk-menu-item="item.id"
           role="menuitem"
           @mouseenter="activate(group.id, item.id)"
           @click="choose(group, item)"
