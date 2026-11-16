@@ -11,6 +11,7 @@
       </div>
       <div class="desk-split-grid">
         <DeskGrid
+          name="split-lines"
           ref="gridRef"
           v-model:rows="gridRows"
           mode="entry"
