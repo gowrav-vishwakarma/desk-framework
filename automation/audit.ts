@@ -4,6 +4,11 @@ import type { DeskAuditFinding } from './types';
 
 const MUST_BE_NAMED = new Set(['grid', 'dialog', 'tabs', 'pivot', 'settings', 'form']);
 const INTERACTIVE = 'button, input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])';
+/**
+ * Popups a field opens in `<body>` and drives from itself (a lookup's suggestion list: arrows, Enter, its ☆ by mouse):
+ * their controls belong to the focused field's node, not to a node of their own.
+ */
+const FIELD_POPUPS = '.desk-suggest';
 
 /**
  * Coverage check. A control with no node, a repeated surface with no name, or a duplicate
@@ -34,6 +39,7 @@ export function auditDesk(limit = 50): DeskAuditFinding[] {
     if (!isShown(el)) continue;
     if (el.closest('[data-desk-path]')) continue;
     if (el.closest('[data-desk-audit-ignore]')) continue;
+    if (el.closest(FIELD_POPUPS)) continue;
     const label = el.getAttribute('aria-label') ?? el.getAttribute('data-desk-field') ?? el.textContent?.trim().slice(0, 30) ?? '';
     findings.push({ rule: 'outside-node', detail: `${el.tagName.toLowerCase()} ${label}`.trim() });
   }
