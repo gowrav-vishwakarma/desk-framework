@@ -43,3 +43,11 @@ export function footCellBottoms(rows: FootPinRow[]): number[][] {
   }
   return bottoms;
 }
+
+/**
+ * Pinned totals stick to the grid's bottom only while the grid keeps room for one body row between the header and
+ * them. In a shorter grid they would cover the row being typed in, so they scroll with the rows until there is room.
+ */
+export function footPinFits(gridHeight: number, headHeight: number, footHeight: number, rowHeight: number): boolean {
+  return gridHeight - headHeight - footHeight >= rowHeight;
+}

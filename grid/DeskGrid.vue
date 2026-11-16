@@ -194,7 +194,7 @@
           <tr v-if="gridWindow.padBottom > 0" class="desk-pad" aria-hidden="true">
             <td :colspan="padSpan" :style="{ height: `${gridWindow.padBottom}px` }" />
           </tr>
-          <tr v-if="footPinned && padHeight > 0" class="desk-pad" aria-hidden="true">
+          <tr v-if="footSticks && padHeight > 0" class="desk-pad" aria-hidden="true">
             <td :colspan="padSpan" :style="{ height: `${padHeight}px` }" />
           </tr>
         </tbody>
@@ -362,7 +362,7 @@ import { registerOpenEditor } from '../form/openEditors';
 import { deskEditorMode, runLookupEditor, type DeskLookupEditorMode } from '../form/lookupEditor';
 import { cellToTheLeft, resolveBackLanding, resolveCellEnter, resolveGridKey, type DeskNewRowAt, type DeskTabFlow, type GridKeyAction } from './keyboard';
 import { resolveDrawerKey, type DrawerPlace } from './drawerKey';
-import { footCellBottoms, scrollDeltaToClear } from './footPin';
+import { footCellBottoms, footPinFits, scrollDeltaToClear } from './footPin';
 import { clearRowData, emptyColumnValue } from './rows';
 import { DESK_GRID_VIRTUAL_AT, deskGridWindow } from './window';
 import { normalizeRange, parseTsv, rangeToTsv } from './clipboard';
@@ -1087,12 +1087,22 @@ function setFootCell(cell: HTMLTableCellElement, bottom: number | null): void {
   if (cell.style.zIndex !== '4') cell.style.zIndex = '4';
 }
 
+/** The pinned totals stick now: pinned, and the grid has room for a body row above them (`footPinFits`). */
+const footSticks = ref(false);
+
 /** Stick the whole totals block, from the first footer line through the last, plus any rowspan beside it. */
 function pinFootRows(): void {
-  const foot = scroller.value?.querySelector('tfoot');
-  if (!foot) return;
+  const host = scroller.value;
+  const foot = host?.querySelector('tfoot');
+  if (!host || !foot) {
+    footSticks.value = false;
+    return;
+  }
   const rows = [...foot.querySelectorAll<HTMLTableRowElement>(':scope > tr')];
-  if (!footPinned.value) {
+  const head = host.querySelector('thead')?.getBoundingClientRect().height ?? 0;
+  const bodyRow = host.querySelector('tbody tr:not(.desk-pad)')?.getBoundingClientRect().height || 24;
+  footSticks.value = footPinned.value && footPinFits(host.clientHeight, head, foot.getBoundingClientRect().height, bodyRow);
+  if (!footSticks.value) {
     rows.forEach((row) => {
       for (const cell of row.cells) setFootCell(cell, null);
     });
@@ -1113,7 +1123,7 @@ function pinFootRows(): void {
 function syncPad(): void {
   pinFootRows();
   const host = scroller.value;
-  if (!footPinned.value || !host || orderedRows.value.length >= DESK_GRID_VIRTUAL_AT) {
+  if (!footSticks.value || !host || orderedRows.value.length >= DESK_GRID_VIRTUAL_AT) {
     padHeight.value = 0;
     return;
   }
@@ -1412,7 +1422,7 @@ function revealPastPinned(node: HTMLElement): void {
   const next = row?.nextElementSibling;
   const drawer = next instanceof HTMLElement && next.classList.contains('desk-row-drawer') ? next.getBoundingClientRect() : null;
   const header = host.querySelector('thead')?.getBoundingClientRect().height ?? 0;
-  const coveredByFoot = footPinned.value && !node.closest('tfoot');
+  const coveredByFoot = footSticks.value && !node.closest('tfoot');
   const footer = coveredByFoot ? (host.querySelector('tfoot')?.getBoundingClientRect().height ?? 0) : 0;
   host.scrollTop += scrollDeltaToClear(cell.top, drawer?.bottom ?? cell.bottom, hostBox.top + header, hostBox.bottom - footer);
   revealPastStickyStart(node, host, hostBox);

@@ -42,6 +42,8 @@ Call `waitIdle()` after a navigation or a save. Start with `snapshot({ format: '
 
 A call returns `{ ok: false, error, reason }` when it cannot do what was asked. Read `reason` and try the path or value it lists. Do not guess a second path.
 
+**Readouts.** Figures a page shows that are not fields (a footer's totals, a running balance) are read, not filled: the page passes `DeskForm :readout` (a function returning a plain object), merged into the form node's `read()`. Ankpal's voucher form gives `footer`: `taxable`, `tax`, `roundOff`, `grandTotal`, `payable` (null when that line is not on screen) and `lines` (each footer line by id).
+
 ## Public entry
 
 Another app copies this folder and imports only `index.ts`. That import also loads the theme stylesheets. Ankpal pages keep the paths they already use. A new host-facing symbol is added to `index.ts`. Form layout, pivot, and spreadsheet export stay off that list until a host needs them.
@@ -329,7 +331,7 @@ fill handle. Key the grid on the mode, so it remounts cleanly when the user swit
 
 `DeskGrid` puts `≡` in the top-left header cell when there is something to choose. The menu holds:
 
-- **Pin totals**, when the page fills the `#foot` slot. Bind it with `v-model:pin-foot`.
+- **Pin totals**, when the page fills the `#foot` slot. Bind it with `v-model:pin-foot`. Pinned totals stick to the grid's bottom only while a body row still fits above them (`footPinFits` in `grid/footPin.ts`); in a shorter grid they scroll with the rows, so they never cover the row being typed in.
 
 Total lines with an `edit` in the `foot` prop are keyboard targets. Arrow Down from the last row reaches them, and Enter emits `foot` with that edit. With `foot-entry`, Enter that finishes the rows lands on the first such line instead of the next field. On a line, Enter moves to the next one (Shift+Enter back), and past the last one it goes to the next field. Ctrl+Enter emits `foot`.
 - **Page toggles**, from the `options` prop (`{ id, label, checked }`). Choosing one emits `option` with that id. The page stores the checked state.

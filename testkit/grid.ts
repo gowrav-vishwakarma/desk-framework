@@ -231,10 +231,60 @@ export async function deskRunRowActionDirect(
   if (typeof row.index !== 'number') throw new Error(`no row index for ${text}`);
   expectOk(await client.act(grid, 'runRowAction', { row: row.index, name: action }), `row action ${action} on ${text}`);
   await client.waitIdle();
-  if ((await client.describe('top')).path.startsWith('dialog:')) {
+  if ((await client.describe('top')).kind === 'dialog') {
     expectOk(await client.act('top', 'answer', { choice: answer }), `answer ${answer} to ${action}`);
     await client.waitIdle();
   }
+}
+
+/**
+ * Click a grid cell where a person sees it. A grid scrolls under a sticky header and pinned totals; a person scrolls
+ * the grid just enough to see the cell between them and clicks its middle. (A plain locator click scrolls the cell to
+ * the grid's edge, under the header or the totals, and then cannot click it.) A list a field left open over the grid
+ * (a lookup's suggestions, the currency list) is closed with Escape first. Throws when the cell stays covered.
+ */
+export async function deskClickCell(page: DeskUserPage, grid: string, row: number, column: string): Promise<void> {
+  const cell = page.locator(deskLocators.node(grid)).first().locator(deskLocators.gridCell(row, column)).first();
+  await cell.waitFor({ state: 'visible', timeout: 5000 });
+  const aim = () =>
+    cell.evaluate((el) => {
+      el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      let host: HTMLElement | null = el.parentElement;
+      while (host && !(/(auto|scroll)/.test(getComputedStyle(host).overflowY) && host.scrollHeight > host.clientHeight)) host = host.parentElement;
+      if (host) {
+        const box = host.getBoundingClientRect();
+        const head = host.querySelector('thead')?.getBoundingClientRect().height ?? 0;
+        const footCell = host.querySelector('tfoot td');
+        const pinned = !el.closest('tfoot') && footCell instanceof HTMLElement && getComputedStyle(footCell).position === 'sticky';
+        const foot = pinned ? host.querySelector('tfoot')!.getBoundingClientRect().height : 0;
+        const shown = el.getBoundingClientRect();
+        const top = box.top + head;
+        const bottom = box.bottom - foot;
+        if (shown.top < top) host.scrollTop -= top - shown.top;
+        else if (shown.bottom > bottom) host.scrollTop += Math.min(shown.bottom - bottom, shown.top - top);
+      }
+      const box = el.getBoundingClientRect();
+      const x = box.left + box.width / 2;
+      const y = box.top + box.height / 2;
+      const hit = document.elementFromPoint(x, y);
+      return {
+        x,
+        y,
+        clear: hit !== null && (hit === el || el.contains(hit)),
+        // A list a field opened on focus (a lookup's suggestions, the currency list) is drawn in the body, outside every
+        // desk node, and may lie over the grid; a dialog or the page itself is a node.
+        popup: hit !== null && hit.closest('[data-desk-path]') === null,
+        covering: hit ? `${hit.tagName.toLowerCase()}.${String(hit.className)}` : 'nothing on screen',
+      };
+    });
+  let point = await aim();
+  if (!point.clear && point.popup) {
+    // A person closes the list first.
+    await page.keyboard.press('Escape');
+    point = await aim();
+  }
+  if (!point.clear) throw new Error(`${grid} row ${row} ${column}: the cell is covered (by ${point.covering})`);
+  await page.mouse.click(point.x, point.y);
 }
 
 /**
@@ -252,7 +302,7 @@ export async function deskPickInCell(
   pickKey = 'Enter',
 ): Promise<void> {
   const cell = page.locator(deskLocators.node(grid)).first().locator(deskLocators.gridCell(row, column)).first();
-  await cell.click();
+  await deskClickCell(page, grid, row, column);
   // Typing on the cell opens its editor with the first key, as for a person; the rest follows the focus.
   await cell.pressSequentially(text, { delay: 20 });
   const wanted = text.toLowerCase();
@@ -298,6 +348,9 @@ interface DeskGridColumnView {
   id: string;
   editor: string;
   multiple?: boolean;
+  /** The dialog the cell opens, and when (`change`: after an edit; `never`: only on its key). */
+  dialog?: string;
+  when?: string;
 }
 
 async function gridColumn(client: DeskClient, grid: string, column: string): Promise<DeskGridColumnView> {
@@ -313,7 +366,7 @@ async function gridColumn(client: DeskClient, grid: string, column: string): Pro
  */
 export async function deskChooseInCell(page: DeskUserPage, client: DeskClient, grid: string, row: number, column: string, label: string): Promise<void> {
   const cell = page.locator(deskLocators.node(grid)).first().locator(deskLocators.gridCell(row, column)).first();
-  await cell.click();
+  await deskClickCell(page, grid, row, column);
   await cell.pressSequentially(label, { delay: 20 });
   await page.keyboard.press('Enter');
   await client.waitIdle();
@@ -341,7 +394,7 @@ export async function deskEditCell(page: DeskUserPage, client: DeskClient, grid:
  */
 export async function deskTypeInCell(page: DeskUserPage, client: DeskClient, grid: string, row: number, column: string, text: string): Promise<void> {
   const cell = page.locator(deskLocators.node(grid)).first().locator(deskLocators.gridCell(row, column)).first();
-  await cell.click();
+  await deskClickCell(page, grid, row, column);
   await cell.pressSequentially(text, { delay: 20 });
   await page.keyboard.press('Tab');
   await client.waitIdle();
@@ -369,4 +422,52 @@ export function deskWithholds(states: Record<string, boolean | undefined>, actio
 export async function deskToolbarOffers(client: DeskClient, id: string): Promise<boolean> {
   const listed = (await client.act('top', 'actions')) as { result?: { buttons?: Array<{ id?: string; label?: string }> } };
   return (listed.result?.buttons ?? []).some((button) => button.id === id || button.label === id);
+}
+
+async function untilDialog(client: DeskClient, timeoutMs: number): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if ((await client.describe('top')).kind === 'dialog') return;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+}
+
+/**
+ * Enter one line in an entry grid as a person does: take the blank row (the one whose `blankColumn` is empty, where
+ * the grid keeps its new row), then edit each column in the order given with `deskEditCell` (typed, chosen or picked
+ * by the column's editor). The row is followed by its key, so a grid that puts the next blank row first still edits
+ * the same line. A dialog a cell opens goes to `onDialog` (the caller knows what to answer); without it the step fails
+ * naming the dialog. Returns the line's row index once entered.
+ */
+export async function deskEnterRow(
+  page: DeskUserPage,
+  client: DeskClient,
+  grid: string,
+  values: Readonly<Record<string, string | readonly string[]>>,
+  options: {
+    blankColumn: string;
+    /** A cell may open a dialog (a variants box after the quantity): called with its path to answer it as a person would. */
+    onDialog?: (dialog: string, column: string) => Promise<void>;
+  },
+): Promise<number> {
+  const rowsNow = async () => (await client.read<DeskGridView>(grid, { offset: 0, limit: 500 })).rows ?? [];
+  const blank = (await rowsNow()).find((row) => String(row.cells?.[options.blankColumn]?.value ?? '') === '');
+  if (!blank || typeof blank.index !== 'number') throw new Error(`${grid} has no blank row (empty ${options.blankColumn}) to enter a line in`);
+  let index = blank.index;
+  for (const [column, value] of Object.entries(values)) {
+    const found = blank.key ? (await rowsNow()).find((row) => row.key === blank.key) : undefined;
+    if (typeof found?.index === 'number') index = found.index;
+    await deskEditCell(page, client, grid, index, column, value);
+    // A column that opens a dialog after an edit (the grid says so) gets a moment for it to appear, as a person waits.
+    const view = await gridColumn(client, grid, column);
+    if (view.dialog && view.when !== 'never') await untilDialog(client, 1500);
+    for (let answered = 0; answered < 4; answered += 1) {
+      const top = await client.describe('top');
+      if (top.kind !== 'dialog') break;
+      if (!options.onDialog) throw new Error(`${grid} ${column} opened ${top.path}; pass onDialog to answer it`);
+      await options.onDialog(top.path, column);
+      await client.waitIdle();
+    }
+  }
+  return index;
 }

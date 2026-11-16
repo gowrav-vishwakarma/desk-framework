@@ -25,12 +25,15 @@ export interface DeskLocator {
   pressSequentially(text: string, options?: { delay?: number }): Promise<void>;
   press(key: string): Promise<void>;
   innerText(): Promise<string>;
+  /** Run a function on the element in the page (reads its box, scrolls its grid). */
+  evaluate<R>(fn: (element: HTMLElement) => R): Promise<R>;
 }
 
 /** A page a person drives: a Playwright `Page` fits. */
 export interface DeskUserPage {
   locator(selector: string): DeskLocator;
   keyboard: { press(key: string): Promise<void> };
+  mouse: { click(x: number, y: number): Promise<void> };
 }
 
 export interface DeskChange {

@@ -52,6 +52,11 @@ const props = withDefaults(
     dirty?: DeskFormDirty;
     /** Name in the automation tree. Defaults to `form`. */
     name?: string;
+    /**
+     * Figures the page shows that are not fields (a footer's totals, a balance): merged into the form node's `read()`,
+     * so a test or an agent reads what the user sees. Read only; keys must not clash with the form's own.
+     */
+    readout?: () => Record<string, unknown>;
   }>(),
   { disableInitialFocus: false, disableSpatialMove: false, refocusOnEnter: true, issues: () => [], serverIssues: () => [] },
 );
@@ -167,6 +172,7 @@ useDeskAutomationNode({
     issues: shown.value.map((issue) => ({ field: issue.fieldId ?? null, message: issue.message })),
     toasts: toasts.value.map((issue) => issue.message),
     fieldsOnScreen: [...mounted.keys()],
+    ...(props.readout?.() ?? {}),
   }),
   brief: () => ({ dirty: tracker ? tracker.dirty.value : null, issue: shown.value[0]?.message ?? null }),
   ops: () => ({
