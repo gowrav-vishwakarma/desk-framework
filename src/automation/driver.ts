@@ -167,6 +167,10 @@ export function createDeskDriver() {
     async navigate(target: string) {
       const go = deskHost().automation?.navigate;
       if (!go) return { ok: false, error: 'this host has no navigate' };
+      // A person cannot go elsewhere while a modal dialog is open (it covers the menu): neither can a test. Going
+      // anyway changed the route under the dialog, and later steps drove the dialog left on top.
+      const top = topDeskNode();
+      if (top?.kind === 'dialog') return { ok: false, error: `a dialog is open (${top.path()}): close it first, as a person would` };
       const reached = await go(target);
       deskEvent('navigate', reached);
       await waitDeskIdle();
