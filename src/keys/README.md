@@ -2,7 +2,7 @@
 
 One small keyboard system for the desk ERP. It handles shortcuts, focus order (Enter and Tab), and first focus when a page or dialog opens.
 
-It does not use or change the classic app's shortcut code. Presets and action labels come from the host through `configureDesk` in `../host.ts`. The reference app keeps its preset JSON files in `src/desk/ankpal/erp/keys/presets/`. Names such as voucher, party or sales invoice below are that app's screens, used as examples.
+It does not use or change the classic app's shortcut code. Presets and action labels come from the host through `configureDesk` in `../host.ts`. The reference app keeps its preset JSON files in `src/tenant/keys/presets/`. Names such as voucher, party or sales invoice below are that app's screens, used as examples.
 
 ## Words used here
 
@@ -44,7 +44,7 @@ There are two more listeners (keydown and keyup in capture phase) for the Alt ta
 
 The steps above live in `dispatchDeskKey(event)`. It returns `handled` (a desk handler ran), `blocked` (a dialog is open, the user is typing, or the key repeated) or `pass` (desk has no use for it). The standalone shell calls it from its own listener.
 
-A host that has its own global keys, such as the classic app, calls `installDeskKeys({ embedded: true })` and calls `dispatchDeskKey` itself. Embedded mode keeps only the jump preview. There is no Alt tap and no bubble listener, because the host keeps its own menu bar and runs its global keys only on `pass`. See `../../ankpal/README.md`. Shift+Enter is handled by the focused field or grid, which calls `preventDefault`, so the classic shortcut manager skips it. It is not a keymap action.
+A host that has its own global keys, such as the classic app, calls `installDeskKeys({ embedded: true })` and calls `dispatchDeskKey` itself. Embedded mode keeps only the jump preview. There is no Alt tap and no bubble listener, because the host keeps its own menu bar and runs its global keys only on `pass`. See the Ankpal desk's `README.md`. Shift+Enter is handled by the focused field or grid, which calls `preventDefault`, so the classic shortcut manager skips it. It is not a keymap action.
 
 ## Menus: the Alt tap
 

@@ -4,7 +4,7 @@
 
 Keyboard-first UI for a Quasar app: shortcuts, focus order, dialogs, menu bar, and the spreadsheet grid. A product's pages, records, and API calls live in its own folder and are not part of this one.
 
-**Examples in these docs.** Paths under `ankpal/` and words like voucher, party or ledger name the reference app this framework was built in (the Ankpal desk). They show one way to use a feature. Nothing here imports them, and a project that uses this package does not need them.
+**Examples in these docs.** Paths under `src/tenant/` and words like voucher, party or ledger name the reference app this framework was built in (the Ankpal desk, `ankpal-erp/ankpal-desk-frontend`, whose company desk is `src/tenant/` and admin desk `src/admin/`). They show one way to use a feature. Nothing here imports them, and a project that uses this package does not need them.
 
 The framework always runs inside Quasar. `vue` and `quasar` are peer dependencies. It also uses `vue-router`, `@tanstack/vue-virtual`, `@tanstack/vue-table`, `xlsx-js-style` and `echarts` (peers too). The testkit (`@desk/framework/testkit`) has no runtime imports: it runs in Node beside Playwright, Vitest or an MCP server without pulling them in.
 
@@ -68,7 +68,7 @@ A new app imports only `@desk/framework` (`src/index.ts`). That import also load
 
 ## Host
 
-Call `configureDesk` once, before `loadDeskKeymap` and before a lookup opens. Ankpal does this in `ankpal/layout/DeskLayout.vue`.
+Call `configureDesk` once, before `loadDeskKeymap` and before a lookup opens. Ankpal does this in `src/tenant/layout/DeskLayout.vue`.
 
 ```ts
 configureDesk({
@@ -118,7 +118,7 @@ Any page can use this. It does not know what a page is about.
 - **Server errors:** pass them as `:server-issues`. `issuesFromErrors` in `form/issues.ts` turns a qnatk `errors` map (`{ key: string[] }`) into that list. A full path is tried, then its last segment (`bankDetail.bankName` looks up `bankName`), then the key itself. A key no field uses, such as `Error`, never mounts, so it shows in the form's header strip. Editing a field hides its server error until the page replaces the list (the next save); a settings row counts as its `key`, a `DeskGrid` as its `field-id` (a cell changed or a row deleted), so a grid-wide refusal such as `Visit 2: …` steps aside once the grid is edited. Pages never clear these by hand. A load or autofill does not count as an edit. When the list arrives, the first issue's field takes the focus; a field in a closed tab first has its tab opened (each `DeskTabItem` names its pane's field ids in `fields`). Pages call `applySaveFailure(caught, serverIssues)` (`erp/data/saveFailure.ts`): ops' field `errors` go under their fields, its `blockers` to the header strip, and the page header gets a message only when the answer named neither.
 - **Where unplaced problems show:** one switch for every form, `DESK_UNPLACED_ISSUES` in `form/issueDisplay.ts`: `header` (a strip at the top of the form, default) or `toast`.
 
-Examples: `validateAccount` (`ankpal/pages/accounts/accountForm.ts`) and `validateVoucher` (`ankpal/voucher/validate.ts`). A settings cell mounts its `key`, so an issue with that `fieldId` shows on the cell. An entry-grid cell does not mount a field id, so a line-grid problem stays an issue without `fieldId`.
+Examples: `validateAccount` (`src/tenant/pages/accounts/accountForm.ts`) and `validateVoucher` (`src/tenant/voucher/validate.ts`). A settings cell mounts its `key`, so an issue with that `fieldId` shows on the cell. An entry-grid cell does not mount a field id, so a line-grid problem stays an issue without `fieldId`.
 
 ## Unsaved changes
 
@@ -188,7 +188,7 @@ validation stops a save, so `after="dirty"` does not lock a form the user still 
 
 `openDeskPage({ page, params, title, result })` opens a page in a dialog and resolves with the save, or null when the user closed it. `result` is `'response'` (default, the API reply), `'data'` (what the page holds) or `'both'`. `DeskPageDialogHost` draws the open pages and each host mounts it once, beside `DeskConfirmHost`. The page loads before the dialog shows, so focus lands on its first field. A page in a dialog joins the dialog's key layer, so Ctrl+S, Escape and the field jump keys work as on the routed page, and a page leaves out keys that would replace it (the account page drops New).
 
-**Lookups with an editor.** `DeskLookupConfig.editor` (`DeskLookupEditor`) names the page, the params for New (`create`) and Edit (`edit`, which receives the row picked here or null), the `result` mode and `toRow`, which turns the save into the row to pick. The lookup then answers the preset's `action-new` and `action-edit` keys and adds New and Edit rows to its right-click menu. A lookup without an editor leaves those keys alone, which matters because Ctrl+Enter is Edit in some presets and the section jump everywhere else. In a form the box picks the returned row through its normal `pick` path. A grid cell and a settings cell run the editor themselves and write the row like a picked one, because they rebuild the cell when focus leaves. The product supplies the editor (`accountEditor` and `productEditor` in `ankpal/data/pageEditors.ts`) and the framework never imports its pages. A column whose `commit` stores the id under another name sets `lookupId`, so Edit on a resting cell can open that record.
+**Lookups with an editor.** `DeskLookupConfig.editor` (`DeskLookupEditor`) names the page, the params for New (`create`) and Edit (`edit`, which receives the row picked here or null), the `result` mode and `toRow`, which turns the save into the row to pick. The lookup then answers the preset's `action-new` and `action-edit` keys and adds New and Edit rows to its right-click menu. A lookup without an editor leaves those keys alone, which matters because Ctrl+Enter is Edit in some presets and the section jump everywhere else. In a form the box picks the returned row through its normal `pick` path. A grid cell and a settings cell run the editor themselves and write the row like a picked one, because they rebuild the cell when focus leaves. The product supplies the editor (`accountEditor` and `productEditor` in `src/tenant/data/pageEditors.ts`) and the framework never imports its pages. A column whose `commit` stores the id under another name sets `lookupId`, so Edit on a resting cell can open that record.
 
 `panel-class="is-full"` makes a dialog almost the whole window, and the grid inside it takes the remaining height. `is-sheet`, `is-page`, `is-link` and `is-wide` are the narrower sizes.
 
@@ -415,13 +415,13 @@ A list of fewer than 80 rows is drawn in full. A longer list is a window. Arrow 
 
 ## Hosting
 
-`DeskShell` is the standalone host. Both it and the in-app embed host call `useDeskShellLayer()` (`layout/useDeskShellLayer.ts`), which owns the field-move and section-jump keys. A page that builds URLs must not write `/desk` itself. It asks `useDeskBase()` (`ankpal/router/deskBase.ts`) for a `deskUrl('accounts/new')`, so the same page works under `.../desk` and inside the classic app. See `../ankpal/README.md`.
+`DeskShell` is the standalone host. Both it and the in-app embed host call `useDeskShellLayer()` (`layout/useDeskShellLayer.ts`), which owns the field-move and section-jump keys. A page that builds URLs must not write `/desk` itself. It asks `useDeskBase()` (`src/tenant/router/deskBase.ts`) for a `deskUrl('accounts/new')`, so the same page works under `.../desk` and inside the classic app. See the Ankpal desk's `README.md`.
 
 ## Lookup menu
 
 A lookup list is drawn on the page, under the cell, using the cell's screen position. A dialog's blur would otherwise shift that list down and to the right. While that list is open, the arrow keys move through it. They do not change the grid row. A lookup can also set `fetch(query)`. When it does, that function returns the rows and the host's `searchLookup` is not called.
 
-`DeskLookupConfig` holds only what the box needs: `labelKey`, `valueKey`, `columns`, `minChars`, `opensOnEnter`, `menu`, `fetch`, `acceptTyped`, `blank`, and optional `browseOnFocus`, `localRows`, `onPick`, and `star`. How a query reaches data is the host's business. A host extends the type with its own fields (Ankpal adds `AnkpalLookup` in `ankpal/data/lookupTypes.ts`) and reads them in the `searchLookup` it passes to `configureDesk`. The framework never reads those fields. When `browseOnFocus` is omitted, an empty box searches if `minChars` is 0. A lookup that returns false waits until the user types. `localRows` are shown first. A box with `browseOnFocus` or `localRows` that already has a value (an edit page, a default party) does not open on focus; Down opens the list on its value (local rows, with the value highlighted; a search for it when there are none), and typing searches. A list that focus opened closes if a value arrives while it loads, so an edit page whose record lands after the first focus shows no list. Grid cells keep opening on Enter. `onPick` runs when a real row is chosen. `star` adds a column: `keys` is read when the list opens, and `toggle` stores or drops the row. Ctrl+D (`lookup-star`) toggles the highlighted row. The list is a light grid that grows with its text.
+`DeskLookupConfig` holds only what the box needs: `labelKey`, `valueKey`, `columns`, `minChars`, `opensOnEnter`, `menu`, `fetch`, `acceptTyped`, `blank`, and optional `browseOnFocus`, `localRows`, `onPick`, and `star`. How a query reaches data is the host's business. A host extends the type with its own fields (Ankpal adds `AnkpalLookup` in `src/tenant/data/lookupTypes.ts`) and reads them in the `searchLookup` it passes to `configureDesk`. The framework never reads those fields. When `browseOnFocus` is omitted, an empty box searches if `minChars` is 0. A lookup that returns false waits until the user types. `localRows` are shown first. A box with `browseOnFocus` or `localRows` that already has a value (an edit page, a default party) does not open on focus; Down opens the list on its value (local rows, with the value highlighted; a search for it when there are none), and typing searches. A list that focus opened closes if a value arrives while it loads, so an edit page whose record lands after the first focus shows no list. Grid cells keep opening on Enter. `onPick` runs when a real row is chosen. `star` adds a column: `keys` is read when the list opens, and `toggle` stores or drops the row. Ctrl+D (`lookup-star`) toggles the highlighted row. The list is a light grid that grows with its text.
 
 ## Field menus
 
@@ -434,7 +434,7 @@ Right-click menus are one facility, `menu/fieldMenu.ts`. A menu is a `DeskFieldM
 - `mergeDeskMenus(a, b)` joins menus. `createDeskChecklist(prefKey, items, { label })` is a saved `check` group; its `selected()` returns the checked ids. The framework does not know what the ids mean.
 - `DeskContextMenu` draws the menu. Up and Down move, Enter or Space picks, Escape closes, and a click outside closes. It claims those keys, so the field underneath does not also act on them.
 
-Which fields a party or product search matches is product code: Ankpal's lists are in `ankpal/data/partySearch.ts` and `productSearch.ts`. Each menu starts with Search by, then a List section: last 10 picks, the autocomplete cache, and search on type only (on by default, so focus does not call the list API). Browse-on-focus stays available by turning that check off. Those two lookups always show the star column. Starred rows appear on an empty box only when Open cached is checked, and the cache key follows the cache preferences. Other lookups omit the list hooks and keep searching on focus when `minChars` is 0.
+Which fields a party or product search matches is product code: Ankpal's lists are in `src/tenant/data/partySearch.ts` and `productSearch.ts`. Each menu starts with Search by, then a List section: last 10 picks, the autocomplete cache, and search on type only (on by default, so focus does not call the list API). Browse-on-focus stays available by turning that check off. Those two lookups always show the star column. Starred rows appear on an empty box only when Open cached is checked, and the cache key follows the cache preferences. Other lookups omit the list hooks and keep searching on focus when `minChars` is 0.
 
 ## Preferences
 
@@ -446,7 +446,7 @@ Shortcuts (`desk.keys.<user id>`), the chosen theme (`desk-theme`), and UI font 
 
 ## Framework or product
 
-| Framework                                                                   | Product (`ankpal/`)                                                |
+| Framework                                                                   | Product (`src/tenant/`)                                                |
 | --------------------------------------------------------------------------- | ------------------------------------------------------------------ |
 | Menu mechanism, default date menu, `DeskContextMenu`, `createDeskChecklist` | Which checks exist and what they search: party and product fields  |
 | `DeskPrefStore`, the IndexedDB store                                        | Which store is used, its database name, and any server store       |
@@ -467,7 +467,7 @@ Shortcuts (`desk.keys.<user id>`), the chosen theme (`desk-theme`), and UI font 
 
 Layout tabs on a list carry a pin (`DeskGridLayoutTabs` with `live`, from `layouts.live` and `layouts.togglePin`). Pinned is the default: switching back to a pinned layout shows the rows it last loaded, with no request, as long as its query, sort, filters and page size are unchanged. An unpinned layout loads again on every switch. Rows are kept only while the page is open, so a reload or a new visit loads afresh. Pins are saved with the layouts (`refetch` lists the unpinned ones). A `dynamic` page size keeps its measured rows per page for each layout (`useDeskPageSize({ scope })`), so layouts with different row heights do not reload each other.
 
-A project that already has a list page keeps that fetch. It replaces "always send these columns" with "send what `layouts.query` asks for". Ankpal does that in `ankpal/data/qnatkGridQuery.ts`. Another project writes the same kind of function against its own API. The catalog, the designer, and the saved layouts stay the same.
+A project that already has a list page keeps that fetch. It replaces "always send these columns" with "send what `layouts.query` asks for". Ankpal does that in `src/tenant/data/qnatkGridQuery.ts`. Another project writes the same kind of function against its own API. The catalog, the designer, and the saved layouts stay the same.
 
 ### Catalog
 
