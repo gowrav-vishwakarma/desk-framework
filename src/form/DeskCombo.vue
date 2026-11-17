@@ -11,7 +11,7 @@
       @keydown="onKey"
       @contextmenu="onMenu"
     />
-    <DeskMark kind="select" @press="onMark" />
+    <DeskMark kind="select" :field="fieldId" @press="onMark" />
     <Teleport to="body">
     <div
       v-if="open && filtered.length"

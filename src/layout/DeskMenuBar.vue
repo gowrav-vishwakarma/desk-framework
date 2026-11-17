@@ -4,6 +4,7 @@
       <button
         :ref="(el) => rememberTop(index, el)"
         type="button"
+        :data-desk-action="`menu-${menuSlug(item.label)}`"
         :class="{ on: topOn(index), [`desk-menu-refused-${item.refused}`]: Boolean(item.refused) }"
         :title="item.hint ?? ''"
         @click="onTop(item, index)"
@@ -42,6 +43,9 @@ import {
   type DeskMenuNode,
 } from '../menu/deskMenu';
 import DeskMenuFlyout from './DeskMenuFlyout.vue';
+
+/** A top menu button's id names the menu bar and the menu (`menu-masters`): one word would name no thing. */
+const menuSlug = (label: string): string => label.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'item';
 
 const props = withDefaults(
   defineProps<{

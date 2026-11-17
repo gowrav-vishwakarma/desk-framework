@@ -20,7 +20,7 @@
       @input="onInput"
       @keydown="onKey"
     />
-    <DeskMark v-if="!readonly && variant !== 'grid'" kind="date" @press="toggleCalendar" />
+    <DeskMark v-if="!readonly && variant !== 'grid'" kind="date" :field="fieldId" @press="toggleCalendar" />
     <span v-if="detailText" class="desk-date-preview">{{ detailText }}</span>
     <Teleport to="body">
       <div v-if="open" class="desk-calendar-pop" :style="popStyle">

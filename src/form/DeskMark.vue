@@ -3,7 +3,7 @@
     :is="decorative ? 'span' : 'button'"
     class="desk-affix"
     :class="{ 'is-quiet': decorative }"
-    v-bind="decorative ? { 'aria-hidden': 'true' } : { type: 'button', tabindex: -1, 'aria-label': kind === 'select' ? 'Select' : kind === 'date' ? 'Pick date' : 'Search' }"
+    v-bind="decorative ? { 'aria-hidden': 'true' } : { type: 'button', tabindex: -1, 'aria-label': kind === 'select' ? 'Select' : kind === 'date' ? 'Pick date' : 'Search', 'data-desk-action': buttonId }"
     @mousedown.prevent="onPress"
   >
     <svg v-if="kind === 'select'" viewBox="0 0 16 16" aria-hidden="true">
@@ -21,11 +21,16 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 const props = defineProps<{
   kind: 'select' | 'search' | 'date';
   /** A mark only. It does not take a click, so the cell under it still does. */
   decorative?: boolean;
+  /** The field it opens, for its button id (`partyName-search`, `date-pick-date`): ids name their thing. */
+  field?: string;
 }>();
+const KIND_ACTION = { select: 'select', search: 'search', date: 'pick-date' } as const;
+const buttonId = computed(() => `${props.field || 'field'}-${KIND_ACTION[props.kind]}`);
 const emit = defineEmits<{ press: [] }>();
 
 function onPress(): void {

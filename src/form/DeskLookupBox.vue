@@ -11,7 +11,7 @@
       @blur="onBlur"
       @keydown="onKey"
     />
-    <DeskMark kind="search" @press="onMark" />
+    <DeskMark kind="search" :field="fieldId" @press="onMark" />
     <Teleport to="body">
     <div
       v-if="open"
