@@ -1,7 +1,7 @@
 import type { ComputedRef, Ref } from 'vue';
 import type { DeskOpDef } from '../automation/types';
 import { addGap, addSection, hideField, moveField, moveSection, removeSection, renameSection, restoreField, setFieldCols, setFieldRowStart, setLabelStyle, setLayoutOption, setOpen, toggleInset } from './edit';
-import { layoutOptionsOnTab } from './options';
+import { layoutOptionsOnTab, shownLayoutOptions } from './options';
 import { locateField } from './resolve';
 import type { DeskFormLayout, DeskLayoutFieldInfo, DeskLayoutFieldRef, DeskLayoutOption, DeskLayoutPreset } from './types';
 
@@ -40,7 +40,7 @@ export function layoutReadout(api: LayoutApi, extra: DeskLayoutAutomation): Reco
   const layout = api.layout.value;
   const tabs = extra.tabs ?? [];
   const headerTab = tabs[0]?.id ?? 'header';
-  const options = api.options();
+  const options = shownLayoutOptions(api.options(), layout.options);
   const byTab = (tab: string): Record<string, unknown>[] =>
     (tabs.length === 0 ? options : layoutOptionsOnTab(options, tab, headerTab)).map((option) => ({
       id: option.id,

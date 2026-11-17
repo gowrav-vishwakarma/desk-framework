@@ -116,6 +116,11 @@ export interface DeskLayoutOption {
   default: string;
   /** Designer tab this setting belongs to. Missing means the first tab. */
   tab?: string;
+  /**
+   * Whether the option applies, from the chosen values of the layout's options (the designer's draft while it is open).
+   * A hidden option leaves the designer and reads as its default. Missing means always.
+   */
+  show?: (values: Readonly<Record<string, string>>) => boolean;
 }
 
 export interface DeskFormLayout {

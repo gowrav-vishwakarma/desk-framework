@@ -5,6 +5,7 @@ import { useDeskAutomationNode } from '../automation/registry';
 import { onDeskPrefInvalidate } from '../automation/sets';
 import { readDeskPref, writeDeskPref } from '../storage/deskPrefs';
 import { layoutOps, layoutReadout, type DeskLayoutAutomation } from './layoutAutomation';
+import { layoutOptionValue } from './options';
 import { resolveFormLayout } from './resolve';
 import { copyFormLayout, type DeskFormLayout, type DeskLayoutFieldRef, type DeskLayoutOption } from './types';
 
@@ -94,11 +95,9 @@ export function useDeskFormLayout(
     draft.value = resolveFormLayout(toValue(defaults), null, fields(), options());
   }
 
-  /** The chosen value, including an unsaved designer change. Falls back to the option default. */
+  /** The chosen value, including an unsaved designer change. Falls back to the option default, also while its `show` rule hides it. */
   function option(id: string): string {
-    const chosen = layout.value.options?.[id];
-    if (chosen) return chosen;
-    return options().find((item) => item.id === id)?.default ?? '';
+    return layoutOptionValue(options(), layout.value.options, id);
   }
 
   async function invalidate(): Promise<void> {

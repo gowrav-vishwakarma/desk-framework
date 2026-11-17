@@ -167,7 +167,7 @@ export { default as DeskTabs } from './form/DeskTabs.vue';
 export { TAB_QUERY_KEY, joinTabPath, splitTabPath } from './form/deskTabRoute';
 export { default as DeskFormZone } from './formLayout/DeskFormZone.vue';
 export { default as DeskLayoutDesigner } from './formLayout/designer/DeskLayoutDesigner.vue';
-export { layoutOptionsOnTab } from './formLayout/options';
+export { layoutOptionsOnTab, layoutOptionValue, layoutOptionValues, shownLayoutOptions } from './formLayout/options';
 export { layoutSlots, optionsOnlyLayout } from './formLayout/types';
 export type { DeskFormLayout, DeskLayoutFieldInfo, DeskLayoutOption } from './formLayout/types';
 export { DESK_FORM_LAYOUT_ACTION, useDeskFormLayout, useDeskLayoutPanel } from './formLayout/useDeskFormLayout';

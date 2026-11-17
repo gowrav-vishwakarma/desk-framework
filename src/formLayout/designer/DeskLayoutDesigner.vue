@@ -177,7 +177,7 @@
 import { computed, nextTick, ref, watch } from 'vue';
 import DeskDialog from '../../form/DeskDialog.vue';
 import DeskTabs from '../../form/DeskTabs.vue';
-import { layoutOptionsOnTab } from '../options';
+import { layoutOptionsOnTab, shownLayoutOptions } from '../options';
 import { addGap, addSection, hideField, moveField, moveSection, removeSection, renameSection, restoreField, setFieldCols, setFieldRowStart, setLabelStyle, setLayoutOption, setOpen, toggleInset } from '../edit';
 import { locateField } from '../resolve';
 import { isGapId, slotCols, type DeskFormLayout, type DeskLayoutFieldInfo, type DeskLayoutOption, type DeskLayoutPreset } from '../types';
@@ -232,9 +232,11 @@ const tabItems = computed(() => props.tabs.map((tab) => ({ id: tab.id, label: ta
 const headerTabId = computed(() => props.tabs[0]?.id ?? 'header');
 /** A form with no zones (a document whose fields are fixed) has only options: every tab shows them as cards. */
 const onHeaderTab = computed(() => props.zones.length > 0 && (props.tabs.length === 0 || designerTab.value === headerTabId.value));
+/** The open tab's options that apply to the draft's values (each option's `show` rule). */
 const visibleOptions = computed(() => {
-  if (props.tabs.length === 0) return props.options;
-  return layoutOptionsOnTab(props.options, designerTab.value || headerTabId.value, headerTabId.value);
+  const shown = shownLayoutOptions(props.options, props.layout.options);
+  if (props.tabs.length === 0) return shown;
+  return layoutOptionsOnTab(shown, designerTab.value || headerTabId.value, headerTabId.value);
 });
 const initialFocus = computed(() => (props.zones.length > 0 ? 'layout-style' : `layout-option-${visibleOptions.value[0]?.id ?? ''}`));
 const presetChoices = computed(() => {

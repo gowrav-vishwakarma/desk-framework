@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { addGap, hideField, moveField, removeSection, setFieldCols, setFieldRowStart, setLayoutOption, toggleInset } from '../src/formLayout/edit';
 import { labelStyleFor } from '../src/formLayout/labels';
+import { layoutOptionValue, shownLayoutOptions } from '../src/formLayout/options';
 import { resolveFormLayout } from '../src/formLayout/resolve';
 import { sectionSummary } from '../src/formLayout/summary';
 import { FORM_LAYOUT_VERSION, layoutSlots, slotCols, slotGridVars, type DeskFormLayout, type DeskLayoutFieldRef, type DeskLayoutOption, type DeskLayoutSlot } from '../src/formLayout/types';
@@ -99,6 +100,24 @@ describe('resolveFormLayout', () => {
     expect(layout().options).toBeUndefined();
     expect(setLayoutOption(layout(), 'warehouse', 'default').options).toEqual({ warehouse: 'default' });
     expect(layout().options).toBeUndefined();
+  });
+
+  it('shows an option only while its rule passes on the chosen values, and reads a hidden one as its default', () => {
+    const grid: DeskLayoutOption = { id: 'grid', label: 'Grid', default: 'two', choices: [{ value: 'two', label: 'Two' }, { value: 'paired', label: 'Paired' }] };
+    const flow: DeskLayoutOption = {
+      id: 'flow',
+      label: 'Flow',
+      default: 'zigzag',
+      choices: [{ value: 'zigzag', label: 'Zigzag' }, { value: 'fill', label: 'Fill' }],
+      show: (values) => values.grid === 'two',
+    };
+    const ids = (chosen?: Record<string, string>) => shownLayoutOptions([grid, flow], chosen).map((option) => option.id);
+    expect(ids()).toEqual(['grid', 'flow']);
+    expect(ids({ grid: 'paired', flow: 'fill' })).toEqual(['grid']);
+    expect(ids({ grid: 'nope' })).toEqual(['grid', 'flow']);
+    expect(layoutOptionValue([grid, flow], { grid: 'two', flow: 'fill' }, 'flow')).toBe('fill');
+    expect(layoutOptionValue([grid, flow], { grid: 'paired', flow: 'fill' }, 'flow')).toBe('zigzag');
+    expect(layoutOptionValue([grid, flow], undefined, 'gone')).toBe('');
   });
 
   it('reads a saved string list as span 1 and keeps a wider slot', () => {
