@@ -144,6 +144,11 @@ export interface DeskLayoutFieldInfo extends DeskLayoutFieldRef {
   hint?: string;
 }
 
+/** The layout of a form whose fields the page draws itself: no zones, only options (`DeskLayoutDesigner` with `zones` `[]`). */
+export function optionsOnlyLayout(): DeskFormLayout {
+  return { version: FORM_LAYOUT_VERSION, labelStyle: 'side', inset: [], zones: {}, hidden: [] };
+}
+
 export function copyFormLayout(layout: DeskFormLayout): DeskFormLayout {
   const zones: DeskFormLayout['zones'] = {};
   for (const [zone, sections] of Object.entries(layout.zones)) {

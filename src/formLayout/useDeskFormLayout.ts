@@ -1,4 +1,6 @@
-import { computed, onBeforeUnmount, onMounted, ref, toValue, watch, type MaybeRefOrGetter } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, toValue, watch, type MaybeRefOrGetter, type Ref } from 'vue';
+import { useDeskLayer } from '../keys/useDeskLayer';
+import { useDeskToolbar } from '../layout/toolbar';
 import { useDeskAutomationNode } from '../automation/registry';
 import { onDeskPrefInvalidate } from '../automation/sets';
 import { readDeskPref, writeDeskPref } from '../storage/deskPrefs';
@@ -114,4 +116,39 @@ export function useDeskFormLayout(
   });
 
   return { layout, ready, draft, begin, replace, cancel, save, reset, option };
+}
+
+/** What the panel needs of `useDeskFormLayout`. */
+export interface DeskLayoutPanelForm {
+  ready: Ref<boolean>;
+  begin: () => void;
+  save: () => Promise<void>;
+}
+
+/** The toolbar button, its action id and what it opens: the form layout designer. */
+export const DESK_FORM_LAYOUT_ACTION = 'desk-form-layout';
+
+/**
+ * The form layout panel of a page: the toolbar's Form layout button (`form-layout`), its action on the page's layer,
+ * and the designer's open state. Opening starts a draft; `save` keeps it and closes. Bind `open` to
+ * `DeskLayoutDesigner` and its `save` event to `save`; cancel and reset stay the layout's own.
+ */
+export function useDeskLayoutPanel(form: DeskLayoutPanelForm): { open: Ref<boolean>; save: () => Promise<void> } {
+  const open = ref(false);
+  useDeskToolbar([{ id: 'form-layout', label: 'Form layout', actionId: DESK_FORM_LAYOUT_ACTION, icon: 'layout' }]);
+  useDeskLayer({
+    handlers: {
+      [DESK_FORM_LAYOUT_ACTION]: () => {
+        if (form.ready.value) open.value = true;
+      },
+    },
+  });
+  watch(open, (shown) => {
+    if (shown) form.begin();
+  });
+  async function save(): Promise<void> {
+    await form.save();
+    open.value = false;
+  }
+  return { open, save };
 }
