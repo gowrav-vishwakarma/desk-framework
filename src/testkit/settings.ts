@@ -76,3 +76,19 @@ export function deskFormDiff(before: DeskFormValues, after: DeskFormValues, igno
   }
   return diffs;
 }
+
+/**
+ * The form a save should leave: `base` (read when the page loaded) with exactly `changes` (key → value; a row that
+ * only shows once something is switched on is added) and without the `gone` rows (closed up by a switch). Compare the
+ * form read again after the save and a reload with it (`deskFormDiff(deskFormWith(base, changes, gone), after)`): every
+ * change saved, nothing else moved. A lookup row is compared by its shown text, so give the shown text for one.
+ */
+export function deskFormWith(base: DeskFormValues, changes: Record<string, unknown>, gone: string[] = []): DeskFormValues {
+  const rows: DeskFormValues['rows'] = { ...base.rows };
+  for (const [key, value] of Object.entries(changes)) {
+    const was = rows[key];
+    rows[key] = was ? { ...was, value, ...(was.editor === 'lookup' ? { shown: String(value ?? '') } : {}) } : { value, shown: String(value ?? '') };
+  }
+  for (const key of gone) delete rows[key];
+  return { rows, grids: { ...base.grids } };
+}
