@@ -162,6 +162,13 @@ useDeskFormPart({ dirty: () => linesTyped.value, save: saveLines, guard: 'page' 
 
 **The question.** `form/leaveGuard.ts`. A page with something to save calls `useDeskDirty(() => isDirty)` (DeskForm does it for a tracked form). While that is true, leaving the route (including a change of route params), a browser reload and `askDeskLeave()` all ask first. The GUI | Desk toggle calls `askDeskLeave()` itself, and so does a page whose tabs each save on their own (Company Setup, Master Setup) before it swaps a tab. Tabs that are parts of one form switch freely (see above). It resolves `true` at once when nothing is dirty. Otherwise `DeskLeaveDialog` (mounted once by the host) asks, and it resolves `true` for **Lose changes** and `false` for **Keep editing** or Escape. It shows **Save** only when the check came with a save (`useDeskDirty(check, save)`, or a tracked form whose dirty parts can all save themselves); that resolves `true` once the save went through. Otherwise the user saves with the page's own button or Ctrl+S. `confirmDeskDiscard({ what, save })` asks the same question about part of a page. The hooks are route-scoped (`onBeforeRouteLeave`, `onBeforeRouteUpdate`) so there is no global guard, and they go away with the page. Pages stack: a page opened in a dialog sits on top of the page under it, the question is about the page on top, and a page in a dialog adds no route hooks. A dialog host registers a never-dirty check below the page it shows, so a page that tracks nothing never asks about the page underneath.
 
+## Button ids
+
+Every button a person can reach carries an id of at least two words naming its thing and action (`charge-add-new`,
+`user-invite-save`): `data-desk-action`, else `data-desk-field`, else its label's slug. One word (`save`) or only
+generic words (`add-new`) fail the audit (`deskButtonIdProblem`). `DeskActionButtons` draws a header action's
+`buttonId` as its `data-desk-action`; the host sets it from the model and the action. Row buttons keep the action name.
+
 ## Buttons that run once
 
 Save, OK, Apply and the like take one click at a time. Use `DeskButton` for them, not a bare `<button>`.

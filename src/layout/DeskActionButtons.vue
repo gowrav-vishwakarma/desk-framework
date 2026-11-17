@@ -6,6 +6,7 @@
     :class="deskActionClass(action)"
     :disabled="action.disabled"
     :data-desk-denied="action.denied ? 'true' : undefined"
+    :data-desk-action="action.buttonId"
     v-bind="action.title ? { title: action.title } : {}"
     @click="emit('run', action.name)"
   >

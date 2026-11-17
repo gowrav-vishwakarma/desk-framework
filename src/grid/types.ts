@@ -412,6 +412,11 @@ export interface DeskRowAction {
   tone?: DeskActionTone;
   /** Extra classes from the host, added as given. */
   class?: string | string[];
+  /**
+   * The button's id when drawn in a page header (`DeskActionButtons`: `data-desk-action`), naming the thing and the
+   * action (`charge-add-new`). Row buttons repeat per row and keep the action name.
+   */
+  buttonId?: string;
 }
 
 /** What `<DeskGrid ref>` exposes to pages. */
