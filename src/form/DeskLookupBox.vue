@@ -460,8 +460,20 @@ async function runSearch(query: string, prefix: readonly Record<string, unknown>
   }
 }
 
+/**
+ * A search typed before a pick, still waiting for its 200 ms or for its answer, is dropped: run after the pick it
+ * opened the list again (over the next cell a person had already moved to, which then lost its typing).
+ */
+function dropPendingSearch(): void {
+  if (timer) clearTimeout(timer);
+  timer = null;
+  generation += 1;
+  loading.value = false;
+}
+
 function choose(hit: Record<string, unknown>): void {
   if (blurTimer) clearTimeout(blurTimer);
+  dropPendingSearch();
   if (isDeskBlankHit(hit)) {
     browsing.value = false;
     draft.value = '';
@@ -705,6 +717,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (blurTimer) clearTimeout(blurTimer);
+  dropPendingSearch();
 });
 
 /** The automation driver searches and picks through the same functions the keyboard uses. */
