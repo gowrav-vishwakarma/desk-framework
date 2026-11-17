@@ -27,7 +27,7 @@ const props = defineProps<{
   /** A mark only. It does not take a click, so the cell under it still does. */
   decorative?: boolean;
   /** The field it opens, for its button id (`partyName-search`, `date-pick-date`): ids name their thing. */
-  field?: string;
+  field?: string | undefined;
 }>();
 const KIND_ACTION = { select: 'select', search: 'search', date: 'pick-date' } as const;
 const buttonId = computed(() => `${props.field || 'field'}-${KIND_ACTION[props.kind]}`);
