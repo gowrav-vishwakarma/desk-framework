@@ -6,7 +6,7 @@ Keyboard-first UI for a Quasar app: shortcuts, focus order, dialogs, menu bar, a
 
 **Examples in these docs.** Paths under `ankpal/` and words like voucher, party or ledger name the reference app this framework was built in (the Ankpal desk). They show one way to use a feature. Nothing here imports them, and a project that uses this package does not need them.
 
-The framework always runs inside Quasar. `vue` and `quasar` are peer dependencies. It also uses `vue-router`, `@tanstack/vue-virtual`, `@tanstack/vue-table`, `xlsx-js-style` and `echarts` (peers too), and `@playwright/test` for the testkit only.
+The framework always runs inside Quasar. `vue` and `quasar` are peer dependencies. It also uses `vue-router`, `@tanstack/vue-virtual`, `@tanstack/vue-table`, `xlsx-js-style` and `echarts` (peers too). The testkit (`@desk/framework/testkit`) has no runtime imports: it runs in Node beside Playwright, Vitest or an MCP server without pulling them in.
 
 ## Package
 
