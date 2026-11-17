@@ -206,11 +206,21 @@ export async function deskRunRowAction(
   }
   for (let tries = 0; (await row.count()) === 0 && tries < 30; tries += 1) await new Promise((resolve) => setTimeout(resolve, 100));
   if ((await row.count()) === 0) throw new Error(`no row showing ${JSON.stringify(text)} on screen in ${grid}`);
-  const button = row.locator(deskLocators.rowAction(action)).first();
-  if (await button.count()) await button.click();
-  else {
-    await row.locator(deskLocators.rowMore).first().click();
-    await page.locator(deskLocators.menuItem(action)).first().click();
+  // A list that re-reads (its filter answered, a refresh) redraws the row under the pointer: find it again and retry.
+  for (let attempt = 1; ; attempt += 1) {
+    try {
+      row = find();
+      const button = row.locator(deskLocators.rowAction(action)).first();
+      if (await button.count()) await button.click({ timeout: 2000 });
+      else {
+        await row.locator(deskLocators.rowMore).first().click({ timeout: 2000 });
+        await page.locator(deskLocators.menuItem(action)).first().click({ timeout: 2000 });
+      }
+      break;
+    } catch (caught) {
+      if (attempt >= 3) throw caught;
+      await client.waitIdle();
+    }
   }
   await client.waitIdle();
   // An action that confirms opens its dialog a moment after the click: wait for it (`isVisible` does not wait), or a
