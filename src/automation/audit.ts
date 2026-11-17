@@ -1,4 +1,4 @@
-import { liveDeskNodes } from './registry';
+import { liveDeskNodes, topDeskNode } from './registry';
 import { isShown } from './visible';
 import type { DeskAuditFinding } from './types';
 
@@ -9,6 +9,54 @@ const INTERACTIVE = 'button, input:not([type="hidden"]), select, textarea, [tabi
  * their controls belong to the focused field's node, not to a node of their own.
  */
 const FIELD_POPUPS = '.desk-suggest';
+
+/**
+ * Words that name no thing. A button id made only of them (`new`, `add-new`, `save`, `close`) says what it does but not
+ * to what, so two of them meet on one page (a list's Add New under a dialog's own): ids name the thing too
+ * (`charge-add-new`, `user-invite-save`). User, 2026-11-17: ids specific, unique on the page.
+ */
+const GENERIC_WORDS = new Set([
+  'new', 'add', 'save', 'close', 'cancel', 'edit', 'delete', 'remove', 'ok', 'yes', 'no', 'back', 'next', 'previous', 'prev',
+  'apply', 'clear', 'accept', 'refresh', 'submit', 'open', 'view', 'button', 'done', 'update', 'reset', 'more', 'all', 'and', 'and-close',
+]);
+const BUTTONS = 'button, [role="button"], a[href]';
+/** Repeated per row by design (a row's own actions): ids repeat across rows, the row tells them apart. */
+const PER_ROW = '[role="row"], tr, .desk-grid-row';
+
+const slug = (text: string): string => text.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+
+/** A button's id as the driver finds it: `data-desk-action`, then `data-desk-field`, then its label. */
+function buttonId(el: Element): string {
+  const own = el.getAttribute('data-desk-action') ?? el.getAttribute('data-desk-field');
+  return own ?? slug(el.getAttribute('aria-label') ?? el.textContent ?? '');
+}
+
+const isGeneric = (id: string): boolean => id !== '' && id.split('-').every((word) => GENERIC_WORDS.has(word));
+
+/** Buttons a person can reach now: in the top dialog when one is open, else on the page; shown, not per row. */
+function reachableButtons(): Element[] {
+  const top = topDeskNode();
+  const layer = top?.kind === 'dialog' ? top.spec.el?.() ?? null : document.body;
+  if (!layer) return [];
+  return [...layer.querySelectorAll(BUTTONS)].filter((el) => isShown(el) && el.closest(PER_ROW) === null && el.closest('[data-desk-audit-ignore]') === null);
+}
+
+/** Generic button ids, and ids two reachable buttons share (a test or a person's tool could press the wrong one). */
+function idFindings(): DeskAuditFinding[] {
+  const findings: DeskAuditFinding[] = [];
+  const byId = new Map<string, Element[]>();
+  for (const el of reachableButtons()) {
+    const id = buttonId(el);
+    if (!id) continue;
+    byId.set(id, [...(byId.get(id) ?? []), el]);
+  }
+  for (const [id, els] of byId) {
+    const where = els[0]?.closest('[data-desk-path]')?.getAttribute('data-desk-path') ?? undefined;
+    if (isGeneric(id)) findings.push({ rule: 'generic-id', ...(where ? { path: where } : {}), detail: `button id "${id}" names no thing: name what it acts on (e.g. charge-${id})` });
+    if (els.length > 1) findings.push({ rule: 'duplicate-id', ...(where ? { path: where } : {}), detail: `${els.length} buttons reachable at once share the id "${id}"` });
+  }
+  return findings;
+}
 
 /**
  * Coverage check. A control with no node, a repeated surface with no name, or a duplicate
@@ -34,6 +82,7 @@ export function auditDesk(limit = 50): DeskAuditFinding[] {
       findings.push({ rule: 'dialog-without-node', detail: dialog.getAttribute('aria-label') ?? dialog.className });
     }
   }
+  findings.push(...idFindings());
   for (const el of document.querySelectorAll(INTERACTIVE)) {
     if (findings.length >= limit) break;
     if (!isShown(el)) continue;

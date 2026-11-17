@@ -56,7 +56,7 @@
       <div class="desk-pivot-popup-actions">
         <button v-if="hasRules" type="button" data-desk-field="pivot-filter-clear" @click="clearAll">Clear all</button>
         <button type="button" :disabled="!checked.size" data-desk-field="pivot-filter-ok" @click="apply">OK</button>
-        <button type="button" @click="emit('close')">Cancel</button>
+        <button type="button" data-desk-field="pivot-filter-cancel" @click="emit('close')">Cancel</button>
       </div>
     </div>
   </Teleport>

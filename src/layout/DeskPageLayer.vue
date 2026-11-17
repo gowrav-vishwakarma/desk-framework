@@ -96,6 +96,17 @@ function everything() {
   return { buttons: buttons(), keys: actions(), components: componentOps() };
 }
 
+/** The button a person clicks for `target` on a toolbar of the page; null for a key action (no button: the key runs it). */
+function pressTarget(target: string): HTMLElement | { ok: false; error: string; reason?: string } | null {
+  const wanted = target.trim().toLowerCase();
+  for (const bar of toolbars()) {
+    const list = (readNode(bar).buttons ?? []) as ToolbarButton[];
+    const hit = list.find((button) => button.id.toLowerCase() === wanted || (button.label ?? '').toLowerCase() === wanted);
+    if (hit) return opsOf(bar).press?.target?.({ id: hit.id }) ?? null;
+  }
+  return null;
+}
+
 function press(target: string): unknown {
   const wanted = target.trim().toLowerCase();
   for (const bar of toolbars()) {
@@ -124,6 +135,7 @@ const page = useDeskAutomationNode({
       description: 'Press a page button or key action by id or label, the same as a click or the key',
       args: { id: { type: 'string', description: 'button or action id, or its label' } },
       run: (args) => press(String(args.id)),
+      target: (args) => pressTarget(String(args.id)),
     },
     run: {
       description: 'Run a layer action by id, through the same stack a key press uses',

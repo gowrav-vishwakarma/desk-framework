@@ -32,11 +32,22 @@ export function headerButtons(root: HTMLElement | null): DeskHeaderButton[] {
   return visibleButtons(root).map((item) => item.button);
 }
 
-export function pressHeaderButton(root: HTMLElement | null, target: string): { ok: boolean; error?: string; reason?: string; pressed?: string } {
+function findHeaderButton(root: HTMLElement | null, target: string): { el: HTMLElement; button: DeskHeaderButton } | { ok: false; error: string; reason: string } {
   const wanted = target.trim().toLowerCase();
   const all = visibleButtons(root);
   const hit = all.find((item) => item.button.id.toLowerCase() === wanted) ?? all.find((item) => item.button.label.toLowerCase() === wanted);
-  if (!hit) return { ok: false, error: `no header button ${target}`, reason: `buttons: ${all.map((item) => `${item.button.id} (${item.button.label})`).join(' | ') || 'none'}` };
+  return hit ?? { ok: false, error: `no header button ${target}`, reason: `buttons: ${all.map((item) => `${item.button.id} (${item.button.label})`).join(' | ') || 'none'}` };
+}
+
+/** The header button a person clicks for `target` (id or label), or why there is none. */
+export function headerButtonTarget(root: HTMLElement | null, target: string): HTMLElement | { ok: false; error: string; reason?: string } {
+  const hit = findHeaderButton(root, target);
+  return 'el' in hit ? hit.el : hit;
+}
+
+export function pressHeaderButton(root: HTMLElement | null, target: string): { ok: boolean; error?: string; reason?: string; pressed?: string } {
+  const hit = findHeaderButton(root, target);
+  if (!('el' in hit)) return hit;
   if (hit.button.disabled) return { ok: false, error: `${hit.button.label} is disabled right now`, ...(hit.button.reason ? { reason: hit.button.reason } : {}) };
   hit.el.click();
   return { ok: true, pressed: hit.button.id };

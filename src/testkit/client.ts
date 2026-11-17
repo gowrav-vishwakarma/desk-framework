@@ -42,6 +42,19 @@ interface DriverWindow {
   __desk?: Record<string, unknown>;
 }
 
+/** How long a person's click waits for its element to be clickable (shown, enabled, not covered). */
+const CLICK_TIMEOUT = 5_000;
+
+type Prepared = { click: true; selector: string; token: number } | { click: false } | DeskOutcome;
+
+/** Playwright's click failure, said briefly: what covered the element, or the first line. */
+function clickProblem(error: unknown): string {
+  const text = error instanceof Error ? error.message : String(error);
+  const covered = text.split('\n').find((line) => line.includes('intercepts pointer events'));
+  if (covered) return `a person cannot click it: ${covered.trim()}`;
+  return `a person cannot click it: ${text.split('\n')[0]}`;
+}
+
 export function createDeskClient(page: DeskPage): DeskClient {
   async function call<R>(method: string, ...args: unknown[]): Promise<R> {
     return page.evaluate(
@@ -60,7 +73,24 @@ export function createDeskClient(page: DeskPage): DeskClient {
     snapshot: (args = {}) => call('snapshot', args),
     describe: (path = '') => call('describe', path),
     read: (path, rows) => call('read', path, rows),
-    act: (path, op, args = {}) => call('act', path, op, args),
+    // An op a person does with a click (a button) is a real click: it fails when the button is hidden, disabled or
+    // covered (a dialog over it), as for a person. Other ops run in the page, refused when a dialog covers their node.
+    act: async (path, op, args = {}) => {
+      if (page.locator) {
+        const prepared = await call<Prepared>('click.prepare', path, op, args);
+        if (!('click' in prepared)) return prepared;
+        if (prepared.click) {
+          let problem: string | null = null;
+          try {
+            await page.locator(prepared.selector).first().click({ timeout: CLICK_TIMEOUT });
+          } catch (error) {
+            problem = clickProblem(error);
+          }
+          return call('click.finish', prepared.token, path, op, args, problem);
+        }
+      }
+      return call('act', path, op, args);
+    },
     fill: (path, value) => call('fill', path, value),
     fillForm: (path, values) => call('fillForm', path, values),
     press: (combo) => call('keys.press', combo),

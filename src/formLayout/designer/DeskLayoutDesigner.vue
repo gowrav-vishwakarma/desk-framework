@@ -9,7 +9,7 @@
         <span class="desk-form-studio-spacer" />
         <DesignerSelect v-if="presetChoices.length > 1" label="Preset" field-id="layout-preset" value="" :choices="presetChoices" @change="onPreset" />
         <button type="button" title="Throw away your layout and use the shipped one" @click="emit('reset')">Reset to default</button>
-        <button type="button" @click="cancel">Cancel</button>
+        <button type="button" data-desk-field="layout-designer-cancel" @click="cancel">Cancel</button>
         <button type="button" class="is-primary" data-desk-field="layout-save" @click="emit('save')">Save</button>
       </header>
       <p v-if="notice" class="desk-designer-note">{{ notice }}</p>

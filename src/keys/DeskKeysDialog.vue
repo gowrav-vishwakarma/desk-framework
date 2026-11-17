@@ -28,9 +28,9 @@
     <p v-if="warning" class="warning">{{ warning }}</p>
     <div class="buttons">
       <button type="button" @click="startCurrent">Change</button>
-      <button type="button" @click="clearCurrent">Clear</button>
+      <button type="button" data-desk-field="keys-clear" @click="clearCurrent">Clear</button>
       <button type="button" @click="reset">Reset to preset</button>
-      <button type="button" @click="open = false">Close</button>
+      <button type="button" data-desk-field="keys-close" @click="open = false">Close</button>
     </div>
   </DeskDialog>
 </template>

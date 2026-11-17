@@ -18,7 +18,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useDeskAutomationNode } from '../automation/registry';
-import { headerButtons, pressHeaderButton } from './headerButtons';
+import { headerButtons, headerButtonTarget, pressHeaderButton } from './headerButtons';
 
 defineProps<{
   title: string;
@@ -38,6 +38,7 @@ useDeskAutomationNode({
       description: 'Click a header button by id or label, the same as a mouse click',
       args: { id: { type: 'string', description: 'button id or its label' } },
       run: (args) => pressHeaderButton(actionsEl.value, String(args.id)),
+      target: (args) => headerButtonTarget(actionsEl.value, String(args.id)),
     },
   }),
 });

@@ -136,6 +136,21 @@ export function topDeskNode(): DeskNode | null {
   return null;
 }
 
+/** Surfaces a person reaches over an open dialog: they open on top of it (context menus, lookup lists). */
+const OVER_DIALOGS = new Set<string>(['contextmenu', 'lookuplist']);
+
+/**
+ * Why a person cannot reach a node now, or null: an open modal dialog covers everything that is not in it (or on
+ * top of it). An act on a covered node is refused, as a person cannot click or type there.
+ */
+export function unreachableReason(node: DeskNode): string | null {
+  const top = topDeskNode();
+  if (!top || top.kind !== 'dialog' || node === top || isDescendant(node, top)) return null;
+  for (let at: DeskNode | null = node; at; at = at.parent) if (OVER_DIALOGS.has(at.kind)) return null;
+  // A dialog opened over this one is the cover only when it was opened later (it is the top one).
+  return `${node.path()} is covered by the dialog ${top.path()}: close it first, as a person would`;
+}
+
 function isDescendant(node: DeskNode, ancestor: DeskNode): boolean {
   let at: DeskNode | null = node.parent;
   while (at) {

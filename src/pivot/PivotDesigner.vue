@@ -34,7 +34,7 @@
         </label>
         <button type="button" :disabled="!layout.values.length" title="Download the pivot as it shows" @click="exportXlsx">Excel</button>
         <button type="button" :class="{ on: showPane }" title="Show or hide the field list" @click="showPane = !showPane">Fields</button>
-        <button type="button" title="Back to the starting layout" @click="reset">Reset</button>
+        <button type="button" data-desk-field="pivot-layout-reset" title="Back to the starting layout" @click="reset">Reset</button>
         <span v-if="highlighting" class="desk-pivot-matchbar" data-desk-field="pivot-matches">
           <button type="button" title="Previous highlighted cell (Shift+F3)" @click="table?.prevMatch()">▲</button>
           <span>{{ matchInfo.count ? `Match ${matchInfo.at || '–'} of ${matchInfo.count.toLocaleString()}` : 'Matches' }}</span>
@@ -60,7 +60,7 @@
       <div v-if="activeRules.length" class="desk-pivot-hint desk-pivot-rules" data-desk-field="pivot-rules">
         <span v-for="rule in activeRules" :key="`${rule.area}:${rule.index}`" class="desk-pivot-rule">
           <strong>{{ rule.name }}</strong>: {{ rule.text.join(' and ') }}
-          <button type="button" title="Clear these rules" @click="clearRules(rule.area, rule.index)">Clear</button>
+          <button type="button" :data-desk-field="`pivot-rules-clear-${rule.area}-${rule.index}`" title="Clear these rules" @click="clearRules(rule.area, rule.index)">Clear</button>
         </span>
       </div>
 

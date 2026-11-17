@@ -4,8 +4,8 @@
       <div class="desk-header-filter-title">{{ header }}</div>
       <DeskFilterEditor ref="editor" :kind="kind" :value="value" :choices="choices" @chip="emit('apply', $event)" />
       <div class="desk-header-filter-actions">
-        <button type="button" @click="emit('apply', '')">Clear</button>
-        <button type="button" @click="apply">Apply</button>
+        <button type="button" data-desk-field="header-filter-clear" @click="emit('apply', '')">Clear</button>
+        <button type="button" data-desk-field="header-filter-apply" @click="apply">Apply</button>
       </div>
     </div>
   </Teleport>

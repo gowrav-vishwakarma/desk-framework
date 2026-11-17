@@ -6,7 +6,7 @@ import { pendingDeskWork, waitDeskIdle } from './busy';
 import { deskTestSetsOpen } from './testSets';
 import { deskEvent, deskEventsSince, lastDeskEventId } from './events';
 import { pressDeskKey, typeDeskText } from './keys';
-import { actOnPath, runDeskOp } from './outcome';
+import { actOnPath, finishDeskClick, prepareDeskClick, runDeskOp } from './outcome';
 import { recordDeskAct, startDeskRecording, stopDeskRecording } from './record';
 import { childrenOf, deskAutomationEnabled, liveDeskNodes, opsOf, resolveDeskPath, topDeskNode, nodeKindsPresent } from './registry';
 import { applyDeskSet, captureDeskSet, deskSetAdapters, diffDeskSet, invalidateDeskPref } from './sets';
@@ -61,9 +61,14 @@ export function createDeskDriver() {
       version: DESK_DRIVER_VERSION,
       kinds: nodeKindsPresent(),
       paths: 'kind:name segments joined by /. A trailing part works when unique (grid:items). `top` is the topmost dialog or page. Trailing row:<key>/col:<id> become args.',
-      calls: ['snapshot', 'describe', 'act', 'fill', 'fillForm', 'waitIdle', 'keys.press', 'keys.type', 'focus', 'audit', 'events.since', 'record.start', 'record.stop', 'sets.capture', 'sets.apply', 'sets.diff', 'navigate', 'targets', 'fields', 'rows', 'prefs.readAll', 'prefs.write', 'prefs.replaceAll'],
+      calls: ['snapshot', 'describe', 'act', 'click.prepare', 'click.finish', 'fill', 'fillForm', 'waitIdle', 'keys.press', 'keys.type', 'focus', 'audit', 'events.since', 'record.start', 'record.stop', 'sets.capture', 'sets.apply', 'sets.diff', 'navigate', 'targets', 'fields', 'rows', 'prefs.readAll', 'prefs.write', 'prefs.replaceAll'],
     }),
     nodes: () => nodeList(),
+    /** A person's click, made by the testkit: `prepare` marks the element (or refuses, or says there is none), `finish` reports what the click changed. */
+    click: {
+      prepare: (path: string, op: string, args: Record<string, unknown> = {}) => prepareDeskClick(path, op, args),
+      finish: (token: number, path: string, op: string, args: Record<string, unknown> = {}, clickError: string | null = null) => finishDeskClick(token, path, op, args, clickError, hooks),
+    },
     top: () => topDeskNode()?.path() ?? null,
     describe(path?: string) {
       if (!path) return childrenOf(null).map(describeNode);

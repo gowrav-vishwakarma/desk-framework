@@ -215,9 +215,23 @@ function buttons(): { id: string; text: string; enabled: boolean }[] {
   }));
 }
 
-function press(id: string): unknown {
+function control(id: string): HTMLElement | { ok: false; error: string; reason: string } {
   const el = [...(root.value?.querySelectorAll('[data-desk-field]') ?? [])].find((item) => item.getAttribute('data-desk-field') === id);
-  if (!(el instanceof HTMLElement)) return { ok: false, error: `no control ${id} in this dialog`, reason: `controls: ${buttons().map((item) => item.id).join(', ')}` };
+  return el instanceof HTMLElement ? el : { ok: false, error: `no control ${id} in this dialog`, reason: `controls: ${buttons().map((item) => item.id).join(', ')}` };
+}
+
+/** The control a person clicks to answer `choice` (the first of its ids the dialog has). */
+function answerControl(choice: string): HTMLElement | { ok: false; error: string; reason: string } {
+  for (const id of ANSWERS[choice] ?? []) {
+    const el = control(id);
+    if (el instanceof HTMLElement) return el;
+  }
+  return { ok: false, error: `this dialog has no answer ${choice}`, reason: `controls: ${buttons().map((item) => item.id).join(', ')}` };
+}
+
+function press(id: string): unknown {
+  const el = control(id);
+  if (!(el instanceof HTMLElement)) return el;
   if (el instanceof HTMLButtonElement && el.disabled) return { ok: false, error: `${id} is disabled` };
   el.click();
   return { ok: true };
@@ -242,7 +256,7 @@ useDeskAutomationNode({
     accept: { description: 'Accept the dialog, as Ctrl+S does', run: () => accept() },
     cancel: { description: 'Cancel the dialog, as Escape does', run: () => close() },
     close: { description: 'Close the dialog', run: () => close() },
-    press: { description: 'Press a button by its data-desk-field id', args: { id: { type: 'string' } }, run: (args) => press(String(args.id)) },
+    press: { description: 'Press a button by its data-desk-field id', args: { id: { type: 'string' } }, run: (args) => press(String(args.id)), target: (args) => control(String(args.id)) },
     answer: {
       description: 'Answer a question dialog: ok, cancel, yes, no, save, keep, lose',
       args: { choice: { type: 'string', enum: Object.keys(ANSWERS) } },
@@ -254,6 +268,7 @@ useDeskAutomationNode({
         }
         return { ok: false, error: `this dialog has no answer ${String(args.choice)}`, reason: `controls: ${buttons().map((item) => item.id).join(', ')}` };
       },
+      target: (args) => answerControl(String(args.choice)),
     },
   }),
 });

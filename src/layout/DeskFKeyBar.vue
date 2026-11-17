@@ -69,6 +69,10 @@ useDeskAutomationNode({
         if (item.visible && !item.visible()) return { ok: false, error: `${item.id} is hidden right now` };
         return runDeskAction(item.actionId) ? { ok: true } : { ok: false, error: `no page handles ${item.actionId} right now` };
       },
+      target: (args) => {
+        const el = rootEl.value?.querySelector<HTMLElement>(`[data-desk-toolbar="${CSS.escape(String(args.id))}"]`);
+        return el ?? { ok: false, error: `no toolbar button ${String(args.id)}`, reason: `buttons: ${items.map((entry) => entry.id).join(', ')}` };
+      },
     },
   }),
 });

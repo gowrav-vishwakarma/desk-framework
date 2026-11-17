@@ -79,7 +79,7 @@
           {{ calc ? 'Save' : 'Add to Values' }}
         </button>
         <button v-if="calc" type="button" @click="remove">Delete field</button>
-        <button type="button" @click="open = false">Cancel</button>
+        <button type="button" data-desk-field="pivot-calc-cancel" @click="open = false">Cancel</button>
       </div>
     </div>
   </DeskDialog>

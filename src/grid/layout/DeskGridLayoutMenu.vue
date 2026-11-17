@@ -50,7 +50,7 @@
         <button type="button" role="menuitem" class="hit" @click="run({ action: 'edit' })">Edit this layout...</button>
         <button type="button" role="menuitem" class="hit" @click="run({ action: 'duplicate' })">Duplicate</button>
         <button v-if="canReset" type="button" role="menuitem" class="hit" @click="run({ action: 'reset' })">Reset to default</button>
-        <button v-if="!isDefault" type="button" role="menuitem" class="hit" @click="run({ action: 'delete' })">Delete</button>
+        <button v-if="!isDefault" type="button" role="menuitem" class="hit" data-desk-field="grid-layout-delete" @click="run({ action: 'delete' })">Delete</button>
       </div>
     </Teleport>
   </div>

@@ -20,8 +20,8 @@
           <button type="button" title="Load a layout exported from this same list" data-desk-field="grid-layout-import" @click="pickImport">Import</button>
           <input ref="importInput" type="file" accept=".json,application/json" hidden @change="onImportFile" />
         </template>
-        <button v-if="!isNew && draft.id !== DESK_DEFAULT_LAYOUT_ID" type="button" class="is-danger" @click="emit('delete', draft.id)">Delete</button>
-        <button type="button" @click="open = false; emit('cancel')">Cancel</button>
+        <button v-if="!isNew && draft.id !== DESK_DEFAULT_LAYOUT_ID" type="button" class="is-danger" data-desk-field="grid-layout-designer-delete" @click="emit('delete', draft.id)">Delete</button>
+        <button type="button" data-desk-field="grid-layout-designer-cancel" @click="open = false; emit('cancel')">Cancel</button>
         <button type="button" class="is-primary" data-desk-field="grid-layout-save" @click="save">Save</button>
       </header>
       <div v-if="pendingAll" class="desk-grid-studio-import" role="alertdialog" aria-label="Import layouts">
@@ -39,7 +39,7 @@
         <div class="desk-grid-studio-import-actions">
           <button type="button" class="is-primary" data-desk-field="grid-layout-import-overwrite" @click="confirmImportAll('overwrite')">Overwrite</button>
           <button type="button" @click="confirmImportAll('add')">Add as new</button>
-          <button type="button" @click="pendingAll = null">Cancel</button>
+          <button type="button" data-desk-field="grid-layout-apply-all-cancel" @click="pendingAll = null">Cancel</button>
         </div>
       </div>
       <p v-if="notice" class="desk-designer-note">{{ notice }}</p>

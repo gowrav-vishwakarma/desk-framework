@@ -37,6 +37,12 @@ export interface DeskOpDef {
   description: string;
   args?: Record<string, DeskOpArg>;
   run: (args: Record<string, unknown>) => unknown;
+  /**
+   * The element a person clicks for this op (a button), or a refusal when there is none to click. When given,
+   * the testkit clicks it as a person does (a real pointer click, which fails when something covers it) instead
+   * of calling `run`.
+   */
+  target?: (args: Record<string, unknown>) => HTMLElement | { ok: false; error: string; reason?: string } | null;
 }
 
 export interface DeskReadOptions {
