@@ -56,22 +56,22 @@ useDeskAutomationNode({
   name: () => 'toolbar',
   el: () => rootEl.value,
   read: () => ({
-    buttons: items.map((item) => ({ id: item.id, label: item.label, action: item.actionId, visible: !item.visible || item.visible(), keys: deskKeyLabel(item.actionId) })),
+    buttons: items.value.map((item) => ({ id: item.id, label: item.label, action: item.actionId, visible: !item.visible || item.visible(), keys: deskKeyLabel(item.actionId) })),
   }),
-  brief: () => ({ buttons: items.filter((item) => !item.visible || item.visible()).map((item) => item.id) }),
+  brief: () => ({ buttons: items.value.filter((item) => !item.visible || item.visible()).map((item) => item.id) }),
   ops: () => ({
     press: {
       description: 'Press a toolbar button by id',
       args: { id: { type: 'string' } },
       run: (args) => {
-        const item = items.find((entry) => entry.id === String(args.id));
-        if (!item) return { ok: false, error: `no toolbar button ${String(args.id)}`, reason: `buttons: ${items.map((entry) => entry.id).join(', ')}` };
+        const item = items.value.find((entry) => entry.id === String(args.id));
+        if (!item) return { ok: false, error: `no toolbar button ${String(args.id)}`, reason: `buttons: ${items.value.map((entry) => entry.id).join(', ')}` };
         if (item.visible && !item.visible()) return { ok: false, error: `${item.id} is hidden right now` };
         return runDeskAction(item.actionId) ? { ok: true } : { ok: false, error: `no page handles ${item.actionId} right now` };
       },
       target: (args) => {
         const el = rootEl.value?.querySelector<HTMLElement>(`[data-desk-toolbar="${CSS.escape(String(args.id))}"]`);
-        return el ?? { ok: false, error: `no toolbar button ${String(args.id)}`, reason: `buttons: ${items.map((entry) => entry.id).join(', ')}` };
+        return el ?? { ok: false, error: `no toolbar button ${String(args.id)}`, reason: `buttons: ${items.value.map((entry) => entry.id).join(', ')}` };
       },
     },
   }),

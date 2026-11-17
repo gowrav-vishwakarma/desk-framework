@@ -4,7 +4,8 @@ import { flushPromises, mount } from '@vue/test-utils';
 import DeskLayoutDesigner from '../src/formLayout/designer/DeskLayoutDesigner.vue';
 import { FORM_LAYOUT_VERSION, optionsOnlyLayout, type DeskFormLayout, type DeskLayoutOption } from '../src/formLayout/types';
 import { useDeskLayoutPanel } from '../src/formLayout/useDeskFormLayout';
-import { deskToolbarItems } from '../src/layout/toolbar';
+import { deskToolbarItems, useDeskToolbar } from '../src/layout/toolbar';
+import DeskFKeyBar from '../src/layout/DeskFKeyBar.vue';
 
 const OPTIONS: DeskLayoutOption[] = [
   { id: 'branch', label: 'Branch', default: 'page', tab: 'place', choices: [{ value: 'page', label: 'Choose' }, { value: 'default', label: 'Default' }] },
@@ -81,17 +82,47 @@ describe('useDeskLayoutPanel', () => {
       template: '<div />',
     });
     const wrapper = mount(Page);
-    expect(deskToolbarItems().some((item) => item.id === 'form-layout' && item.actionId === 'desk-form-layout')).toBe(true);
+    expect(deskToolbarItems().value.some((item) => item.id === 'form-layout' && item.actionId === 'desk-form-layout')).toBe(true);
     panel!.open.value = true;
     await nextTick();
     await panel!.save();
     expect(calls).toEqual(['begin', 'save']);
     expect(panel!.open.value).toBe(false);
     wrapper.unmount();
-    expect(deskToolbarItems().some((item) => item.id === 'form-layout')).toBe(false);
+    expect(deskToolbarItems().value.some((item) => item.id === 'form-layout')).toBe(false);
   });
 
   it('an options-only layout has no zones', () => {
     expect(optionsOnlyLayout()).toEqual({ version: FORM_LAYOUT_VERSION, labelStyle: 'side', inset: [], zones: {}, hidden: [] });
+  });
+});
+
+describe('the F-key bar between pages', () => {
+  it('shows one Form layout button, the newest page\'s, and keeps it when the earlier page leaves', async () => {
+    const bar = mount(DeskFKeyBar, { attachTo: document.body });
+    const buttons = () => [...bar.element.querySelectorAll('[data-desk-toolbar]')].map((el) => el.getAttribute('data-desk-toolbar'));
+    expect(buttons()).not.toContain('form-layout');
+    const page = (label: string, extra: string | null) =>
+      defineComponent({
+        setup() {
+          useDeskLayoutPanel({ ready: ref(true), begin: () => undefined, save: async () => undefined });
+          if (extra) useDeskToolbar([{ id: extra, label: extra, actionId: extra }]);
+          return {};
+        },
+        template: `<div>${label}</div>`,
+      });
+    const payment = mount(page('payment', 'payment-extra'));
+    await nextTick();
+    expect(buttons()).toEqual(['form-layout', 'payment-extra']);
+    const receipt = mount(page('receipt', null));
+    await nextTick();
+    expect(buttons().filter((id) => id === 'form-layout')).toHaveLength(1);
+    payment.unmount();
+    await nextTick();
+    expect(buttons()).toEqual(['form-layout']);
+    receipt.unmount();
+    await nextTick();
+    expect(buttons()).toEqual([]);
+    bar.unmount();
   });
 });

@@ -1,4 +1,4 @@
-import { onUnmounted, reactive } from 'vue';
+import { computed, onUnmounted, reactive, type ComputedRef } from 'vue';
 
 /**
  * One button in the shell toolbar. A click runs `actionId` on the top page that handles it.
@@ -14,22 +14,36 @@ export interface DeskToolbarItem {
   visible?: () => boolean;
 }
 
-const items = reactive<DeskToolbarItem[]>([]);
+interface OwnedItem extends DeskToolbarItem {
+  owner: symbol;
+}
 
-/** Show these buttons while the calling component is mounted. */
+const items = reactive<OwnedItem[]>([]);
+
+/**
+ * Show these buttons while the calling component is mounted. Each call owns its entries: the next page mounts before
+ * the last one unmounts, so two pages may name the same button (`form-layout`) for a moment; the newest is shown and
+ * the leaving page takes away only its own.
+ */
 export function useDeskToolbar(list: readonly DeskToolbarItem[]): void {
-  const ids = new Set(list.map((item) => item.id));
-  for (const item of list) {
-    if (!items.some((existing) => existing.id === item.id)) items.push({ ...item });
-  }
+  const owner = Symbol('desk-toolbar');
+  for (const item of list) items.push({ ...item, owner });
   onUnmounted(() => {
     for (let index = items.length - 1; index >= 0; index -= 1) {
-      const item = items[index];
-      if (item && ids.has(item.id)) items.splice(index, 1);
+      if (items[index]?.owner === owner) items.splice(index, 1);
     }
   });
 }
 
-export function deskToolbarItems(): readonly DeskToolbarItem[] {
-  return items;
+/** The buttons on the bar: one per id, the newest owner's, in the order the ids first came. */
+const shown = computed((): DeskToolbarItem[] => {
+  const newest = new Map<string, OwnedItem>();
+  // A Map keeps an id where it was first set; setting it again only replaces the entry.
+  for (const item of items) newest.set(item.id, item);
+  return [...newest.values()].map(({ owner: _owner, ...item }) => item);
+});
+
+/** The bar's buttons, kept up to date as pages add and remove theirs. */
+export function deskToolbarItems(): ComputedRef<DeskToolbarItem[]> {
+  return shown;
 }

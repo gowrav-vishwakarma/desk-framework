@@ -694,7 +694,7 @@ A page can pass `presets` (`DeskLayoutPreset`: id, label, optional tab, and an `
 
 Label styles are Side (label beside the input, 4 columns), Above (caption above, 5 columns), and Placeholder (the label is the empty placeholder and the hover title, 6 columns). In Placeholder style a field can keep its label inside the input. A date always does, because a date input cannot show a placeholder. On a voucher, Branch and Warehouse always do too, because a filled name does not say which of the two it is. The layout designer shows them as "label inside". Columns fall to 3 at 1200px and to 2 at 860px.
 
-`layout/toolbar.ts` (`useDeskToolbar`) adds buttons to the shell's `DeskFKeyBar`. A click runs that action. A button with `icon` is only that picture, and its label is the tooltip. Icons are `layout` and `scan`. A button without an icon shows its label, and a shortcut only when the action has keys. `visible` is an optional function; when it returns false the button stays off the bar. Form layout is the layout icon and has no shortcut.
+`layout/toolbar.ts` (`useDeskToolbar`) adds buttons to the shell's `DeskFKeyBar`. A click runs that action. A button with `icon` is only that picture, and its label is the tooltip. Icons are `layout` and `scan`. A button without an icon shows its label, and a shortcut only when the action has keys. `visible` is an optional function; when it returns false the button stays off the bar. Each call owns its buttons: the next page mounts before the last one unmounts, so both may name a button (`form-layout`) for a moment; the bar shows the newest, and the leaving page takes away only its own. Form layout is the layout icon and has no shortcut.
 
 # Feature development in project
 
