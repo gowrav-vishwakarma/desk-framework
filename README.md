@@ -20,11 +20,13 @@ git clone git@github.com:gowrav-vishwakarma/desk-framework.git
 npm install ../desk-framework   # "@desk/framework": "file:../desk-framework"
 ```
 
+The host sets `install-links=true` in its `.npmrc` (npm copies the package into `node_modules`, so there is one vue and one quasar), aliases `@desk/framework` to `node_modules/@desk/framework/src` (Quasar: `build.alias`, which also writes the tsconfig paths), and adds `@desk/framework` to Vite's `optimizeDeps.exclude`. The Ankpal desk (`ankpal-erp/ankpal-desk-frontend`) does all three, pins the commit it is tested with in `.desk-framework-ref`, and copies a new commit in with `npm run fw:update`.
+
 Here: `npm test` runs the unit tests (Vitest, happy-dom, Quasar plugin) in `test/`, and `npm run typecheck` runs `vue-tsc` over `src/` and `test/`. CI runs both.
 
 ## Import rule
 
-Files under `src/` may import Vue, Quasar, those libraries, and other files of this package. They must not import a host app. A host that still keeps a copy of this folder in its tree (the Ankpal desk under `src/desk/framework`) enforces the same rule with ESLint `no-restricted-imports`.
+Files under `src/` may import Vue, Quasar, those libraries, and other files of this package. They must not import a host app: a host's behavior comes in through `configureDesk`, props and callbacks.
 
 ## For agents
 
