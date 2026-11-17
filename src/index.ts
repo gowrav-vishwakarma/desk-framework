@@ -1,5 +1,5 @@
 /**
- * Public entry for an app that copies this folder.
+ * Public entry of @desk/framework.
  * Import this file, not the files under it. A host that grew up with the folder may keep deep paths.
  */
 import './theme/desk-tokens.css';
@@ -154,7 +154,7 @@ export type {
 export { deskSavedFilter, freezeDeskFilter, thawDeskFilter, sameDeskFilter, type DeskSavedFilter } from './filter/saved';
 export { default as DeskFilterSavedFields } from './filter/DeskFilterSavedFields.vue';
 
-// Also used by the reference app; exported so a copied folder offers every feature from here.
+// Also used by the reference app; exported so a host gets every feature from here.
 export { deskDecimals, formatDeskDecimal, formatDeskNumber } from './currency/money';
 export type { DeskMoneyFrom } from './currency/money';
 export { datePrefs } from './date/datePrefs';

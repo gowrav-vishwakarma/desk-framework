@@ -1,0 +1,58 @@
+{
+  "name": "@desk/framework",
+  "version": "0.1.0",
+  "description": "Desk framework: keyboard-first UI for Quasar apps (shortcuts, focus order, dialogs, menu bar, spreadsheet grid, automation driver and testkit).",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./testkit": "./src/testkit/index.ts",
+    "./*": "./src/*"
+  },
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "vue-tsc --noEmit -p tsconfig.json"
+  },
+  "peerDependencies": {
+    "@playwright/test": "^1.40.0",
+    "@tanstack/vue-table": "^9.2.4",
+    "@tanstack/vue-virtual": "^3.13.39",
+    "echarts": "^6.0.0",
+    "quasar": "^2.16.0",
+    "vue": "^3.4.18",
+    "vue-router": "^4.0.12",
+    "xlsx-js-style": "^1.2.0"
+  },
+  "peerDependenciesMeta": {
+    "@playwright/test": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.65.1",
+    "@quasar/extras": "^1.18.0",
+    "@quasar/vite-plugin": "^2.0.2",
+    "@tanstack/vue-table": "^9.3.1",
+    "@tanstack/vue-virtual": "^3.13.52",
+    "@types/node": "^26.6.6",
+    "@vitejs/plugin-vue": "^6.0.11",
+    "@vue/test-utils": "^2.6.0",
+    "echarts": "^6.1.0",
+    "happy-dom": "^21.0.4",
+    "quasar": "^2.35.4",
+    "typescript": "~5.5.3",
+    "vitest": "^3.2.7",
+    "vue": "^3.5.45",
+    "vue-router": "^4.6.5",
+    "vue-tsc": "^2.2.12",
+    "xlsx-js-style": "^1.2.0"
+  }
+}

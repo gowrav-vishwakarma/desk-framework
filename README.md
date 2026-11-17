@@ -1,22 +1,38 @@
 # Desk framework
 
+[![tests](https://github.com/gowrav-vishwakarma/desk-framework/actions/workflows/test.yml/badge.svg)](https://github.com/gowrav-vishwakarma/desk-framework/actions/workflows/test.yml)
+
 Keyboard-first UI for a Quasar app: shortcuts, focus order, dialogs, menu bar, and the spreadsheet grid. A product's pages, records, and API calls live in its own folder and are not part of this one.
 
-**Examples in these docs.** Paths under `ankpal/` and words like voucher, party or ledger name the reference app in the repository this folder was built in. They show one way to use a feature. Nothing here imports them, and a project that copies this folder does not need them.
+**Examples in these docs.** Paths under `ankpal/` and words like voucher, party or ledger name the reference app this framework was built in (the Ankpal desk). They show one way to use a feature. Nothing here imports them, and a project that uses this package does not need them.
 
-The framework always runs inside Quasar. `vue` and `quasar` are peer dependencies when this folder is later lifted into its own package. It also uses `@tanstack/vue-virtual`, `@tanstack/vue-table`, and `xlsx-js-style`.
+The framework always runs inside Quasar. `vue` and `quasar` are peer dependencies. It also uses `vue-router`, `@tanstack/vue-virtual`, `@tanstack/vue-table`, `xlsx-js-style` and `echarts` (peers too), and `@playwright/test` for the testkit only.
+
+## Package
+
+`@desk/framework` ships its source (`.ts`, `.vue`, `.css`); the host's Vite and Quasar build compile it, so there is no build step here. Exports: `.` (`src/index.ts`), `./testkit` (`src/testkit/index.ts`), and `./*` for deep paths into `src/`.
+
+A host installs it from a local checkout next to its own repository, as the ops backend does with `@ops/framework`:
+
+```sh
+git clone git@github.com:gowrav-vishwakarma/desk-framework.git
+# in the host
+npm install ../desk-framework   # "@desk/framework": "file:../desk-framework"
+```
+
+Here: `npm test` runs the unit tests (Vitest, happy-dom, Quasar plugin) in `test/`, and `npm run typecheck` runs `vue-tsc` over `src/` and `test/`. CI runs both.
 
 ## Import rule
 
-Files under `framework/` may import Vue, Quasar, those libraries, and other `framework/` files. They must not import the ERP app (`src/...` outside desk) or `ankpal/`. ESLint enforces that with `no-restricted-imports`.
+Files under `src/` may import Vue, Quasar, those libraries, and other files of this package. They must not import a host app. A host that still keeps a copy of this folder in its tree (the Ankpal desk under `src/desk/framework`) enforces the same rule with ESLint `no-restricted-imports`.
 
 ## For agents
 
-Whenever you change a product that uses this framework, split the work. Enrich the framework with the generic part, and leave the product's own meaning in the app. The framework is copied from project to project, so a product name, a folder name, or a business word must not become part of it.
+Whenever you change a product that uses this framework, split the work. Enrich the framework with the generic part, and leave the product's own meaning in the app. The framework is shared by every project that uses it, so a product name, a folder name, or a business word must not become part of it.
 
 **Framework.** How a control behaves for any product: focus, keys, dialogs, grids, lists, layout, themes. If a second product would want the same behavior, put the mechanism here as a prop, a callback, or a `configureDesk` hook, and export a new host-facing symbol from `index.ts`. The host passes in the labels, the rows, and the decisions.
 
-**App.** What this product means: its screens, its field names, its rules for when something opens or is required, its API, and its save shape. That code lives in the product's own folder and calls the framework. It does not get copied with this folder.
+**App.** What this product means: its screens, its field names, its rules for when something opens or is required, its API, and its save shape. That code lives in the product's own folder and calls the framework. It does not belong in this package.
 
 If one change needs both, implement the mechanism in the framework and pass the product's rule in from the app. Update this README in the same change when that boundary moves.
 
@@ -46,7 +62,7 @@ A call returns `{ ok: false, error, reason }` when it cannot do what was asked. 
 
 ## Public entry
 
-Another app copies this folder and imports only `index.ts`. That import also loads the theme stylesheets. Ankpal pages keep the paths they already use. A new host-facing symbol is added to `index.ts`. Form layout, pivot, and spreadsheet export stay off that list until a host needs them.
+A new app imports only `@desk/framework` (`src/index.ts`). That import also loads the theme stylesheets. Ankpal pages keep the deep paths they already use (`@desk/framework/grid/...` once they import the package). A new host-facing symbol is added to `index.ts`. Form layout, pivot, and spreadsheet export stay off that list until a host needs them.
 
 ## Host
 

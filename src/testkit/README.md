@@ -20,7 +20,7 @@ imports**: it never loads the app. It talks to the page only through `window.__d
 
 ```ts
 import { test as base } from '@playwright/test';
-import { deskFixtureDefs, type DeskFixtures } from '<framework>/testkit';
+import { deskFixtureDefs, type DeskFixtures } from '@desk/framework/testkit';
 
 export const test = base.extend<DeskFixtures>(deskFixtureDefs());
 
