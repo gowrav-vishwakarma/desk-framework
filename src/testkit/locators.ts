@@ -33,4 +33,8 @@ export const deskLocators = {
   /** The highlighted row of an open lookup list. */
   lookupActive: '.desk-suggest tr.hit.active',
   cellValue: '.desk-cell-value',
+  /** A page toolbar button by its id (`form-layout`). */
+  toolbar: (id: string): string => `[data-desk-toolbar="${id}"]`,
+  /** A choice in the open list of a form layout option (the designer's select). */
+  layoutChoice: '.desk-designer-menu button',
 } as const;

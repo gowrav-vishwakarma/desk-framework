@@ -28,6 +28,7 @@ export {
   type DeskShownRow,
 } from './grid';
 export { deskLocators } from './locators';
+export { deskChooseLayoutOptions, deskLayoutOption, deskLayoutOptions, type DeskLayoutOptionView } from './formLayout';
 export { deskOpenTab, deskOpenTabDirect, deskTabIds, type DeskTabsView } from './tabs';
 export { deskFormDiff, deskFormValues, deskFormWith, deskSettingsIssues, deskSettingsRows, type DeskFormValues, type DeskSettingsRowView } from './settings';
 export { createDeskUser, describeOutcome, expectOk, type DeskUser } from './user';

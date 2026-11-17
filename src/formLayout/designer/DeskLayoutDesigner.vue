@@ -1,5 +1,5 @@
 <template>
-  <DeskDialog v-model:open="open" name="form-layout" page panel-class="is-wide desk-form-designer-panel" initial-focus="layout-style" @close="emit('cancel')" @accept="emit('save')">
+  <DeskDialog v-model:open="open" name="form-layout" page panel-class="is-wide desk-form-designer-panel" :initial-focus="initialFocus" @close="emit('cancel')" @accept="emit('save')">
     <div class="desk-designer-frame desk-form-studio">
       <header class="desk-form-studio-bar">
         <h3>Form layout</h3>
@@ -14,7 +14,7 @@
       </header>
       <p v-if="notice" class="desk-designer-note">{{ notice }}</p>
 
-      <!-- Header and footer: hidden fields | form mock | settings -->
+      <!-- Header and footer: hidden fields | form mock | settings. A form without zones has options only. -->
       <div v-if="onHeaderTab" class="desk-form-studio-body">
         <aside class="desk-form-studio-hidden" @dragover.prevent @drop.prevent="onHideDrop">
           <h4>Not shown <span class="hint">({{ layout.hidden.length }})</span></h4>
@@ -230,11 +230,13 @@ const designerTab = ref('');
 const lockedIds = computed(() => props.fields.filter((field) => field.locked).map((field) => field.id));
 const tabItems = computed(() => props.tabs.map((tab) => ({ id: tab.id, label: tab.label })));
 const headerTabId = computed(() => props.tabs[0]?.id ?? 'header');
-const onHeaderTab = computed(() => props.tabs.length === 0 || designerTab.value === headerTabId.value);
+/** A form with no zones (a document whose fields are fixed) has only options: every tab shows them as cards. */
+const onHeaderTab = computed(() => props.zones.length > 0 && (props.tabs.length === 0 || designerTab.value === headerTabId.value));
 const visibleOptions = computed(() => {
   if (props.tabs.length === 0) return props.options;
   return layoutOptionsOnTab(props.options, designerTab.value || headerTabId.value, headerTabId.value);
 });
+const initialFocus = computed(() => (props.zones.length > 0 ? 'layout-style' : `layout-option-${visibleOptions.value[0]?.id ?? ''}`));
 const presetChoices = computed(() => {
   const tab = designerTab.value || headerTabId.value;
   const presets = props.presets.filter((preset) => !preset.tab || preset.tab === tab);
