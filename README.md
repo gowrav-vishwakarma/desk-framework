@@ -22,6 +22,10 @@ npm install ../desk-framework   # "@desk/framework": "file:../desk-framework"
 
 The host sets `install-links=true` in its `.npmrc` (npm copies the package into `node_modules`, so there is one vue and one quasar), aliases `@desk/framework` to `node_modules/@desk/framework/src` (Quasar: `build.alias`, which also writes the tsconfig paths), and adds `@desk/framework` to Vite's `optimizeDeps.exclude`. The Ankpal desk (`ankpal-erp/ankpal-desk-frontend`) does all three, pins the commit it is tested with in `.desk-framework-ref`, and copies a new commit in with `npm run fw:update`.
 
+For Ankpal, where every checkout goes and how to run the API and the desk locally is in the Workspace section of
+[`ankpal-desk-frontend/README.md`](https://github.com/Ankpal-ERP/ankpal-desk-frontend#workspace-clone-and-run-everything)
+(this repo sits beside the `ankpal-erp` folder, at the commit in the desk's `.desk-framework-ref`).
+
 Here: `npm test` runs the unit tests (Vitest, happy-dom, Quasar plugin) in `test/`, and `npm run typecheck` runs `vue-tsc` over `src/` and `test/`. CI runs both.
 
 ## Import rule
