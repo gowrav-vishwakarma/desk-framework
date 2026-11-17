@@ -162,6 +162,16 @@ export async function deskFilterColumn(page: DeskUserPage, client: DeskClient, g
   await box.pressSequentially(text, { delay: 20 });
   await box.press('Enter');
   await client.waitIdle();
+  // A list answers its filter a moment later (a server page): wait until the rows on screen are the filtered ones (each
+  // showing the text in that column) or the list is empty, so the caller never reads the rows of the previous filter.
+  const wanted = text.trim().toLowerCase();
+  const deadline = Date.now() + 10_000;
+  while (Date.now() < deadline) {
+    const view = await client.read<DeskGridView>(grid).catch(() => null);
+    const rows = view?.rows ?? [];
+    if (view && !view.loading && rows.every((row) => deskCellShown(row, column).toLowerCase().includes(wanted))) return;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
 }
 
 /**
@@ -183,7 +193,8 @@ export async function deskRunRowAction(
     page
       .locator(deskLocators.node(grid))
       .first()
-      .locator(deskLocators.cellValue)
+      // With a column, only that column's cells: "HO" is a warehouse's name and another row's branch.
+      .locator(options.column ? `td[data-col="${options.column}"] ${deskLocators.cellValue}` : deskLocators.cellValue)
       .filter({ hasText: new RegExp(`^\\s*${text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`) })
       .first()
       .locator('xpath=ancestor::tr[1]');
