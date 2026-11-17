@@ -31,7 +31,16 @@ function buttonId(el: Element): string {
   return own ?? slug(el.getAttribute('aria-label') ?? el.textContent ?? '');
 }
 
-const isGeneric = (id: string): boolean => id !== '' && id.split('-').every((word) => GENERIC_WORDS.has(word));
+/**
+ * A button id has at least two words, `thing-action` (`charge-add-new`, `pivot-calc-save`): one word cannot say both
+ * what it acts on and what it does (user, 2026-11-17: so ids are specific by rule, for people and AI models alike).
+ */
+export const deskButtonIdProblem = (id: string): string | null => {
+  const words = id.split(/[-:]/).filter(Boolean);
+  if (words.length < 2) return `button id "${id}" is one word: use thing-action (e.g. charge-${id || 'add-new'})`;
+  if (words.every((word) => GENERIC_WORDS.has(word))) return `button id "${id}" names no thing: name what it acts on (e.g. charge-${id})`;
+  return null;
+};
 
 /** Buttons a person can reach now: in the top dialog when one is open, else on the page; shown, not per row. */
 function reachableButtons(): Element[] {
@@ -52,7 +61,8 @@ function idFindings(): DeskAuditFinding[] {
   }
   for (const [id, els] of byId) {
     const where = els[0]?.closest('[data-desk-path]')?.getAttribute('data-desk-path') ?? undefined;
-    if (isGeneric(id)) findings.push({ rule: 'generic-id', ...(where ? { path: where } : {}), detail: `button id "${id}" names no thing: name what it acts on (e.g. charge-${id})` });
+    const problem = deskButtonIdProblem(id);
+    if (problem) findings.push({ rule: 'button-id', ...(where ? { path: where } : {}), detail: problem });
     if (els.length > 1) findings.push({ rule: 'duplicate-id', ...(where ? { path: where } : {}), detail: `${els.length} buttons reachable at once share the id "${id}"` });
   }
   return findings;
