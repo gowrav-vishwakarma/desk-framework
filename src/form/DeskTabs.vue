@@ -11,6 +11,7 @@
       :title="item.title ?? ''"
       :class="{ active: item.id === modelValue }"
       :data-desk-tab="item.id"
+      :data-desk-action="`${tabsSlug(label)}-tab-${item.id}`"
       @click="onPick(item.id)"
     >
       {{ item.label }}<slot name="tab-end" :item="item" />
