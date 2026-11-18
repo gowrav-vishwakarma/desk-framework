@@ -348,6 +348,10 @@ Such a report usually moves by row. When the filter is on it moves by cell inste
 (`selection="cell"`, Enter still emits `open`); add `soft-cursor` for a lighter cell frame with no
 fill handle. Key the grid on the mode, so it remounts cleanly when the user switches.
 
+## Rows that stay
+
+In an entry grid, Delete removes the cursor row (under `minRows` it clears it instead). `rowDeletable(row, index)` lets the page keep a row: return `true` to allow the delete, or the reason the row stays. The grid then neither removes nor clears the row, and the reason shows in the status line (`data-desk-grid-refusal`) until the cursor moves to another row. The page owns the rule; for example, a voucher keeps a scheme's free line, which goes with its bought line or its scheme.
+
 ## Row selection
 
 `fit-width` on `DeskGrid` shares the panel across the columns, so the table does not scroll sideways. Text that does not fit is cut with an ellipsis.

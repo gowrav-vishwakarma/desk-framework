@@ -332,7 +332,8 @@
         Filter <strong>{{ filterDraftHeader }}</strong>: “{{ filterDraft.text }}” · <kbd>Enter</kbd> to filter · <kbd>Esc</kbd> to cancel
       </span>
       <span class="footer-end">
-        <slot name="status">{{ loading ? 'Loading…' : hint }}</slot>
+        <span v-if="refusal" class="desk-grid-refusal" role="status" data-desk-grid-refusal>{{ refusal }}</span>
+        <slot v-else name="status">{{ loading ? 'Loading…' : hint }}</slot>
         <DeskGridLayoutMenu v-if="layoutDesigner" :state="layoutDesigner" @command="emit('layout', $event)" />
       </span>
     </div>
@@ -499,6 +500,11 @@ const props = withDefaults(
      * (including lookup ids) instead of removing it. 0 means rows can all be deleted.
      */
     minRows?: number;
+    /**
+     * Entry mode: whether Delete may remove (or, under `minRows`, clear) this row. Return `true` to allow it,
+     * or the reason it is kept; the reason shows in the status line until the cursor moves.
+     */
+    rowDeletable?: (row: DeskGridRow, index: number) => true | string;
     /**
      * Entry mode. `end` (default) adds rows at the bottom. `start` keeps row 0 as the entry row:
      * when it is finished, Enter on its last cell inserts a new blank row above it, so the person
@@ -2258,9 +2264,25 @@ watch(
   { immediate: true },
 );
 
+/** Why the last Delete kept its row (`rowDeletable`); cleared when the cursor moves to another row. */
+const refusal = ref('');
+watch(
+  () => cursor.value.row,
+  () => {
+    refusal.value = '';
+  },
+);
+
 function deleteRow(): void {
   if (rows.value.length === 0) return;
   const index = Math.min(cursor.value.row, rows.value.length - 1);
+  const target = rows.value[index];
+  const allowed = target && props.rowDeletable ? props.rowDeletable(target, index) : true;
+  if (allowed !== true) {
+    refusal.value = allowed;
+    return;
+  }
+  refusal.value = '';
   if (props.minRows > 0 && rows.value.length <= props.minRows) {
     const current = rows.value[index];
     if (!current) return;

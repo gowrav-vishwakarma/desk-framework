@@ -853,6 +853,11 @@ body.desk-col-dragging {
   gap: 6px;
 }
 
+.desk-grid .footer .desk-grid-refusal {
+  color: var(--desk-tone-warning);
+  font-weight: 600;
+}
+
 .desk-grid .footer-end button {
   height: 22px;
   font-size: var(--desk-font);

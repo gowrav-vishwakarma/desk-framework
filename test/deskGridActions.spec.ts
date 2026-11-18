@@ -138,3 +138,57 @@ describe('desk grid row actions', () => {
     wrapper.unmount();
   });
 });
+
+describe('desk grid Delete on an entry row', () => {
+  function entryGrid(rows: DeskGridRow[], minRows = 0) {
+    vi.stubGlobal('ResizeObserver', ResizeObserverStub);
+    const wrapper = mount(DeskGrid, {
+      props: {
+        mode: 'entry',
+        rows,
+        minRows,
+        columns: [
+          { id: 'name', header: 'Item', width: 120 },
+          { id: 'qty', header: 'Qty', width: 60 },
+        ],
+        rowDeletable: (row: DeskGridRow) => (row.kept ? `${String(row.name)} stays` : true),
+        'onUpdate:rows': (next: DeskGridRow[]) => void wrapper.setProps({ rows: next }),
+      },
+      attachTo: document.body,
+    });
+    return wrapper;
+  }
+
+  async function keyOn(wrapper: ReturnType<typeof entryGrid>, name: string) {
+    await wrapper.get('.table-content').trigger('keydown', { key: name });
+    await flushPromises();
+  }
+
+  const names = (wrapper: ReturnType<typeof entryGrid>) => (wrapper.props('rows') as DeskGridRow[]).map((row) => row.name);
+
+  it('keeps a row rowDeletable refuses, says why in the status line, and still deletes the others', async () => {
+    const wrapper = entryGrid([
+      { id: 1, name: 'Pen', qty: 5 },
+      { id: 2, name: 'Free pen', qty: 1, kept: true },
+      { id: 3, name: 'Pad', qty: 2 },
+    ]);
+    await keyOn(wrapper, 'ArrowDown');
+    await keyOn(wrapper, 'Delete');
+    expect(names(wrapper)).toEqual(['Pen', 'Free pen', 'Pad']);
+    expect(wrapper.get('[data-desk-grid-refusal]').text()).toBe('Free pen stays');
+
+    await keyOn(wrapper, 'ArrowDown');
+    expect(wrapper.find('[data-desk-grid-refusal]').exists()).toBe(false);
+    await keyOn(wrapper, 'Delete');
+    expect(names(wrapper)).toEqual(['Pen', 'Free pen']);
+    wrapper.unmount();
+  });
+
+  it('does not clear a refused row that minRows would otherwise blank', async () => {
+    const wrapper = entryGrid([{ id: 1, name: 'Free pen', qty: 1, kept: true }], 1);
+    await keyOn(wrapper, 'Delete');
+    expect(wrapper.props('rows')).toEqual([{ id: 1, name: 'Free pen', qty: 1, kept: true }]);
+    expect(wrapper.get('[data-desk-grid-refusal]').text()).toBe('Free pen stays');
+    wrapper.unmount();
+  });
+});
