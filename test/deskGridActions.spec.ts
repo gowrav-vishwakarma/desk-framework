@@ -192,3 +192,35 @@ describe('desk grid Delete on an entry row', () => {
     wrapper.unmount();
   });
 });
+
+describe('desk grid open-on-focus cell while the user works elsewhere', () => {
+  it('a grid mounting with its cursor on an openOnFocus cell leaves the focus where it is (a form loading its rows)', async () => {
+    vi.stubGlobal('ResizeObserver', ResizeObserverStub);
+    const outside = document.createElement('input');
+    document.body.appendChild(outside);
+    outside.focus();
+    const wrapper = mount(DeskGrid, {
+      props: {
+        mode: 'entry',
+        rows: [{ id: 1, unit: { id: 2, name: 'BALE' } }],
+        columns: [
+          {
+            id: 'unit',
+            header: 'Unit',
+            width: 120,
+            editor: 'lookup',
+            openOnFocus: true,
+            lookup: { labelKey: 'name', valueKey: 'id', columns: [{ id: 'name', header: 'Unit', field: 'name' }], minChars: 0 },
+          },
+        ],
+      },
+      attachTo: document.body,
+    });
+    await flushPromises();
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    await flushPromises();
+    expect(document.activeElement).toBe(outside);
+    expect(wrapper.element.contains(document.activeElement)).toBe(false);
+    wrapper.unmount();
+  });
+});

@@ -296,9 +296,12 @@ export async function deskClickCell(page: DeskUserPage, grid: string, row: numbe
         // desk node, and may lie over the grid; a dialog or the page itself is a node.
         popup: hit !== null && hit.closest('[data-desk-path]') === null,
         covering: hit ? `${hit.tagName.toLowerCase()}.${String(hit.className)}` : 'nothing on screen',
+        // The grid draws a cell's editor over the cell: the focused editor there is this cell's own, already open.
+        editing: hit !== null && hit === document.activeElement && el.closest('[data-desk-path]')?.contains(hit) === true,
       };
     });
   let point = await aim();
+  if (point.editing) return;
   if (!point.clear && point.popup) {
     // A person closes the list first.
     await page.keyboard.press('Escape');

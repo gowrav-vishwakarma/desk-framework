@@ -3290,7 +3290,9 @@ onMounted(() => {
   }
   void nextTick(() => {
     placeSquare();
-    arriveEdit();
+    // Only a grid that already has the focus opens its cell: one mounting while the user works elsewhere (a form
+    // loading its rows) must not take the focus.
+    if (gridActive.value) arriveEdit();
     syncDynamicResizeObserver();
   });
 });
