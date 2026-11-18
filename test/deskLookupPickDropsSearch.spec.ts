@@ -70,3 +70,42 @@ describe('a pick drops the search typed before it', () => {
     expect(asked).toEqual([]);
   });
 });
+
+describe('clearAfterPick on a multiple pick (aliases, tags)', () => {
+  function tags(clearAfterPick: boolean) {
+    configureDesk({
+      presets: {},
+      presetLabels: [],
+      defaultPreset: '',
+      label: (id) => id,
+      // Each row is what was typed.
+      searchLookup: async (_lookup, query) => (query.trim() ? [{ id: query.trim(), alias: query.trim() }] : []),
+    });
+    return mount(DeskLookupBox, {
+      props: { modelValue: '', variant: 'form', multiple: true, lookup: { labelKey: 'alias', valueKey: 'alias', columns: [{ id: 'alias', header: 'Alias', field: 'alias' }], minChars: 0, clearAfterPick } },
+      attachTo: document.body,
+    });
+  }
+
+  it('empties the box after each pick, so a second value is typed fresh; without it the search stays', async () => {
+    vi.useFakeTimers();
+    const cleared = tags(true);
+    await type(cleared, 'ALONE');
+    await vi.advanceTimersByTimeAsync(250);
+    await cleared.get('input').trigger('keydown', { key: 'Enter' });
+    expect(cleared.emitted('toggle')?.[0]).toEqual([{ id: 'ALONE', alias: 'ALONE' }]);
+    expect((cleared.get('input').element as HTMLInputElement).value).toBe('');
+    await type(cleared, 'ALTWO');
+    await vi.advanceTimersByTimeAsync(250);
+    await cleared.get('input').trigger('keydown', { key: 'Enter' });
+    expect(cleared.emitted('toggle')?.[1]).toEqual([{ id: 'ALTWO', alias: 'ALTWO' }]);
+    cleared.unmount();
+
+    const kept = tags(false);
+    await type(kept, 'ALONE');
+    await vi.advanceTimersByTimeAsync(250);
+    await kept.get('input').trigger('keydown', { key: 'Enter' });
+    expect((kept.get('input').element as HTMLInputElement).value).toBe('ALONE');
+    kept.unmount();
+  });
+});

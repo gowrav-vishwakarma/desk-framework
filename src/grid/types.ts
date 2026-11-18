@@ -99,6 +99,11 @@ export interface DeskLookupConfig {
   browseOnFocus?: () => boolean;
   /** Rows to show before a search, such as recent or cached picks. May read them asynchronously. */
   localRows?: () => readonly Record<string, unknown>[] | Promise<readonly Record<string, unknown>[]>;
+  /**
+   * Multiple pick (chips): each pick empties the search box and closes the list, for a list whose rows are what was
+   * typed (aliases, tags), so the next value is typed fresh. Without it the search stays to pick more of its rows.
+   */
+  clearAfterPick?: boolean;
   /** A row was chosen. A blank row is not reported. */
   onPick?: (row: Record<string, unknown>) => void;
   /** Create or edit the listed record in a dialog. Adds the New and Edit keys to this lookup. */

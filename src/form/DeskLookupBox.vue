@@ -506,6 +506,13 @@ function choose(hit: Record<string, unknown>): void {
 function toggle(hit: Record<string, unknown>): void {
   if (blurTimer) clearTimeout(blurTimer);
   emit('toggle', hit);
+  if (props.multiple && props.lookup.clearAfterPick) {
+    // Each row is what was typed (an alias): the box empties for the next one.
+    dropPendingSearch();
+    draft.value = '';
+    hits.value = [];
+    open.value = false;
+  }
   box.value?.focus();
 }
 
