@@ -5,6 +5,8 @@
  * nothing is kept and every read misses. The oldest entries go when there are more than `MAX_ENTRIES`.
  */
 
+import { idbResult as done, openDeskDb } from './idb';
+
 const DB_NAME = 'desk-data-cache';
 const DB_VERSION = 1;
 const STORE = 'entries';
@@ -17,33 +19,7 @@ export interface DeskDataEntry<T> {
   value: T;
 }
 
-function open(): Promise<IDBDatabase | null> {
-  if (typeof indexedDB === 'undefined' || typeof indexedDB.open !== 'function')
-    return Promise.resolve(null);
-  return new Promise((resolve) => {
-    let request: IDBOpenDBRequest;
-    try {
-      request = indexedDB.open(DB_NAME, DB_VERSION);
-    } catch {
-      resolve(null);
-      return;
-    }
-    request.onerror = () => resolve(null);
-    request.onblocked = () => resolve(null);
-    request.onsuccess = () => resolve(request.result);
-    request.onupgradeneeded = () => {
-      const db = request.result;
-      if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath: 'key' });
-    };
-  });
-}
-
-function done<T>(request: IDBRequest<T>): Promise<T | null> {
-  return new Promise((resolve) => {
-    request.onerror = () => resolve(null);
-    request.onsuccess = () => resolve(request.result);
-  });
-}
+const open = (): Promise<IDBDatabase | null> => openDeskDb(DB_NAME, STORE, DB_VERSION);
 
 /** The kept entry, or null when there is none or the store cannot be read. */
 export async function readDeskData<T>(key: string): Promise<DeskDataEntry<T> | null> {

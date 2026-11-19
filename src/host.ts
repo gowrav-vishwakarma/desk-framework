@@ -1,6 +1,7 @@
 import type { DeskLookupConfig } from './grid/types';
 import type { DeskBindings } from './keys/keymap';
 import type { DeskPrefStore } from './storage/prefStore';
+import type { DeskDraftStore } from './storage/deskDrafts';
 import type { DeskAutomationHost } from './automation/types';
 
 /** A named shortcut preset shown in the keys dialog. */
@@ -55,6 +56,13 @@ export interface DeskHost {
    * Set it before the first setting is read.
    */
   prefs?: DeskPrefStore;
+  /**
+   * Whose drafts a form keeps (`useDeskDraft`): a text naming the company and the user, such as `c7:u3`, so one
+   * user never restores another's form. Null (or left out) keeps no drafts.
+   */
+  draftScope?: () => string | null;
+  /** Where drafts are kept. Leave it out for the IndexedDB default; tests pass `createMemoryDraftStore()`. */
+  drafts?: DeskDraftStore;
   /**
    * Turns on the automation driver (`window.__desk`) for tests and AI agents. Off when missing.
    * See `automation/` and the framework README.
