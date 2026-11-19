@@ -3,7 +3,7 @@ import { idbResult, openDeskDb } from './idb';
 
 /**
  * Unsent forms kept on this computer, so an accidental reload does not lose them (`form/draft.ts`). One record per
- * draft key (the host's scope, the page, the record) with when it was saved and the pending idempotency key of its
+ * draft key (the host's scope, the page's path, the URL's draft key) with when it was saved and the pending idempotency key of its
  * last submit. Drafts are company data: the host clears them at logout (`clearDeskDrafts`). A draft older than
  * `DESK_DRAFT_MAX_AGE_MS` is dropped when drafts are read: by then the server has forgotten its idempotency key too.
  */
@@ -25,6 +25,8 @@ export interface DeskDraftStore {
   read: (key: string) => Promise<DeskDraftEntry | null>;
   write: (entry: DeskDraftEntry) => Promise<void>;
   remove: (key: string) => Promise<void>;
+  /** Removes every draft whose key starts with `prefix` (a page's old drafts). */
+  removePrefix: (prefix: string) => Promise<void>;
   /** Removes every draft saved before `time`. */
   removeOlder: (time: number) => Promise<void>;
   clear: () => Promise<void>;
@@ -48,19 +50,22 @@ export function createIndexedDbDraftStore(): DeskDraftStore {
       return fallback;
     }
   }
+  function removeWhere(drop: (entry: DeskDraftEntry) => boolean): Promise<void> {
+    return withStore(
+      'readwrite',
+      async (store) => {
+        const all = (await idbResult(store.getAll() as IDBRequest<DeskDraftEntry[]>)) ?? [];
+        await Promise.all(all.filter(drop).map((entry) => idbResult(store.delete(entry.key))));
+      },
+      undefined,
+    );
+  }
   return {
     read: (key) => withStore('readonly', async (store) => (await idbResult(store.get(key) as IDBRequest<DeskDraftEntry | undefined>)) ?? null, null),
     write: (entry) => withStore('readwrite', async (store) => void (await idbResult(store.put(entry))), undefined),
     remove: (key) => withStore('readwrite', async (store) => void (await idbResult(store.delete(key))), undefined),
-    removeOlder: (time) =>
-      withStore(
-        'readwrite',
-        async (store) => {
-          const all = (await idbResult(store.getAll() as IDBRequest<DeskDraftEntry[]>)) ?? [];
-          await Promise.all(all.filter((entry) => entry.savedAt < time).map((entry) => idbResult(store.delete(entry.key))));
-        },
-        undefined,
-      ),
+    removePrefix: (prefix) => removeWhere((entry) => entry.key.startsWith(prefix)),
+    removeOlder: (time) => removeWhere((entry) => entry.savedAt < time),
     clear: () => withStore('readwrite', async (store) => void (await idbResult(store.clear())), undefined),
   };
 }
@@ -76,6 +81,10 @@ export function createMemoryDraftStore(): DeskDraftStore {
     },
     remove: (key) => {
       entries.delete(key);
+      return Promise.resolve();
+    },
+    removePrefix: (prefix) => {
+      for (const key of [...entries.keys()]) if (key.startsWith(prefix)) entries.delete(key);
       return Promise.resolve();
     },
     removeOlder: (time) => {

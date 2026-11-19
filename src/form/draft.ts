@@ -1,137 +1,193 @@
-import { computed, getCurrentInstance, onBeforeUnmount, ref, watch, type Ref } from 'vue';
+import { computed, getCurrentInstance, inject, onBeforeUnmount, ref, watch, type Ref } from 'vue';
+import { routeLocationKey, routerKey, type LocationQuery } from 'vue-router';
 import { deskHost } from '../host';
 import { deskDraftStore, readDeskDraft } from '../storage/deskDrafts';
 import { deskUuid } from '../request/uuid';
-import { askDeskConfirm } from './confirm';
-import type { DeskFormDirty } from './formDirty';
+import { inDeskPageDialog } from '../page/pageContext';
+import { DESK_DRAFT_QUERY_KEY } from './draftQuery';
 
 /**
- * A refresh-friendly form: while it has unsaved changes, its unsent values (and the idempotency key of a save
- * whose answer never came) are kept on this computer, so an accidental reload or a closed tab does not lose them.
- * When the page opens the same record again, the form asks whether to restore them (Enter restores, Escape
- * discards). Opt in per form; see "Drafts" in the framework README.
+ * Drafts: a desk form survives an accidental reload. Every form with a `useDeskFormDirty` tracker has one unless it
+ * opts out (`draft: false`); see "Drafts" in the framework README.
  *
- * A draft is keyed by the host's `draftScope` (company and user), the page and the record. It goes when the form
- * is clean again (saved, or loaded fresh), when the user discards it, and when the page is left in the app (the
- * leave question already asked about the changes). It expires after a day (`DESK_DRAFT_MAX_AGE_MS`).
+ * One rule for a new record and an existing one: on the first change the page puts a draft key in its URL
+ * (`?draft=<key>`, `router.replace`, no new history entry) and keeps the unsent form under that key. A reload keeps
+ * the URL, so the form comes back with it (and with the idempotency key of a save whose answer never came).
+ * Opening the page without the key (Add New, Edit, a link) starts from the server record or an empty form and
+ * drops that page's old drafts, so a stale draft never overrides a saved record. A save (the form clean again) or
+ * Discard removes the draft and the key.
  */
+
 export interface DeskDraftOptions<T> {
-  /** The page, such as `payment`. */
-  page: string;
-  /** The record on the form: its id, or `new`. Null keeps no draft (nothing to name yet). */
-  record: () => string | number | null;
-  /** The form finished loading its record and defaults: a kept draft is offered then, over them. */
-  ready: () => boolean;
-  /** The unsent form as plain JSON. Files (any `Blob`) are left out: `apply` keeps what the form loaded for them. */
-  read: () => T;
-  /** Puts a restored draft on the form. */
-  apply: (value: T) => void | Promise<void>;
-  /** The form's tracker, or a flag: a draft is kept only while the form has unsaved changes. */
-  dirty: DeskFormDirty | (() => boolean);
-  /** The restore question. Resolves true to restore. Default: `askDeskConfirm`. */
-  ask?: (savedAt: number) => Promise<boolean>;
-  /** Milliseconds a change waits before it is written, so typing writes once. Default 300. */
-  delay?: number;
+  /** The form as kept in a draft (plain JSON). Default: the tracker's source. Files (any `Blob`) are left out. */
+  read?: () => T;
+  /** Puts a restored draft on the form. Default: its top-level keys assigned onto the tracker's source. */
+  apply?: (saved: T) => void | Promise<void>;
 }
 
 export interface DeskDraft {
   /** When the draft now on the form was saved, after a restore; null otherwise. */
   readonly restoredAt: Ref<number | null>;
-  /** Drops the kept draft (an explicit discard). */
+  /** The idempotency key of a save whose answer never came, or null. */
+  readonly pendingKey: Ref<string | null>;
+  /**
+   * Runs the form's save with its idempotency key (the host's client sends it as `Idempotency-Key`): the pending
+   * one, else a new one, kept with the draft. Success clears it, and so does a failure the server answered (host
+   * `submitAnswered`). A lost answer or an aborted call keeps it, so the next Save (also after a reload) repeats the
+   * same submission and the server answers it instead of saving twice.
+   */
+  submit<R>(save: (idempotencyKey: string) => Promise<R>): Promise<R>;
+  /** Puts the record back as it was loaded and removes the draft (the restored note's Discard). */
   discard(): Promise<void>;
   /** Writes a change still waiting for its delay. */
   flush(): Promise<void>;
-  /**
-   * Runs the form's save with its idempotency key (the host's client sends it as `Idempotency-Key`). The key is
-   * the pending one (a save whose answer never came, also from a restored draft), else a new one; it is kept with
-   * the draft. Success clears it; so does a failure the server answered (host `submitAnswered`). A lost answer or
-   * an aborted call keeps it, so the next Save repeats the same submission and is answered, not saved twice.
-   */
-  submit<R>(save: (idempotencyKey: string) => Promise<R>): Promise<R>;
-  /** The pending idempotency key, or null. */
-  readonly pendingKey: Ref<string | null>;
 }
 
-interface Wanted {
-  key: string;
-  /** The draft as JSON text, or null to keep none. */
-  text: string | null;
-  submissionKey: string | null;
+/** What the tracker gives its draft. */
+export interface DeskDraftForm<T> {
+  read: () => T;
+  apply: (saved: T) => void | Promise<void>;
+  dirty: () => boolean;
+  /** The form as it is now is the baseline, and every later change counts (a restore). */
+  takeBaseline: () => void;
+  /** The user typed or clicked in the form since the last `takeBaseline`. */
+  touched: () => boolean;
 }
+
+/** Milliseconds a change waits before it is written, so typing writes once. */
+const WRITE_DELAY = 300;
 
 /** Files cannot be kept as JSON (they would come back as `{}`): a draft leaves them out. */
 function withoutFiles(_key: string, value: unknown): unknown {
   return typeof Blob !== 'undefined' && value instanceof Blob ? undefined : value;
 }
 
-function askRestore(savedAt: number): Promise<boolean> {
-  const when = new Date(savedAt).toLocaleString(deskHost().locale?.(), { dateStyle: 'medium', timeStyle: 'short' });
-  return askDeskConfirm({
-    title: 'Restore unsaved changes?',
-    message: `This form has changes from ${when} that were not saved (the page was reloaded or closed). Restore them?`,
-    okLabel: 'Restore',
-    cancelLabel: 'Discard',
-  });
+const asText = (value: unknown): string => JSON.stringify(value, withoutFiles) ?? 'null';
+
+function queryKey(query: LocationQuery): string | null {
+  const raw = query[DESK_DRAFT_QUERY_KEY];
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  return typeof value === 'string' && value !== '' ? value : null;
 }
 
-export function useDeskDraft<T>(options: DeskDraftOptions<T>): DeskDraft {
-  const delay = options.delay ?? 300;
+interface Wanted {
+  /** The page's URL key, or '' before the first change. */
+  key: string;
+  /** The draft as JSON text, or null to keep none. */
+  text: string | null;
+  submissionKey: string | null;
+}
+
+/**
+ * A form's draft. Kept only for a routed page (not inside a page dialog, not opted out) with a host `draftScope`; otherwise it
+ * holds just the idempotency key, in memory. The tracker calls `loaded()` on every `reset()`: the first one (the
+ * record or a new form's defaults are on the form) starts the draft.
+ */
+export function useDeskFormDraft<T>(form: DeskDraftForm<T>, keep = true): DeskDraft & { loaded: () => void } {
   const restoredAt = ref<number | null>(null);
   const pendingKey = ref<string | null>(null);
-  /** The key whose kept draft was offered: from then on the form's changes are kept under it. */
-  const offered = ref<string | null>(null);
-  const isDirty = (): boolean => (typeof options.dirty === 'function' ? options.dirty() : options.dirty.dirty.value);
+  const router = keep && getCurrentInstance() && !inDeskPageDialog() ? inject(routerKey, null) : null;
+  const route = router ? inject(routeLocationKey, null) : null;
 
-  const key = computed(() => {
-    const scope = deskHost().draftScope?.() ?? null;
-    const record = options.record();
-    return scope && record !== null && record !== '' ? `${scope}|${options.page}|${String(record)}` : null;
-  });
+  /** `<scope>|<path>`: the page whose draft is on, set by its first load. */
+  const page = ref<string | null>(null);
+  /** The form as loaded, before a restore: what Discard puts back. */
+  let loadedText: string | null = null;
+  /** The restored draft, put on again when the page loads once more before the user touches it. */
+  let restored: T | null = null;
+  let navigating = false;
 
-  async function offer(target: string): Promise<void> {
-    const entry = await readDeskDraft<T>(target);
-    if (key.value !== target) return;
-    if (entry) {
-      if (await (options.ask ?? askRestore)(entry.savedAt)) {
-        if (typeof options.dirty !== 'function') options.dirty.arm();
-        await options.apply(entry.value);
-        pendingKey.value = entry.submissionKey;
-        restoredAt.value = entry.savedAt;
-      } else {
-        await deskDraftStore().remove(target);
-      }
-    }
-    if (key.value === target) offered.value = target;
+  const urlKey = computed(() => (route ? queryKey(route.query) : null));
+
+  async function restore(saved: T, savedAt: number, submissionKey: string | null): Promise<void> {
+    loadedText = asText(form.read());
+    form.takeBaseline();
+    await form.apply(saved);
+    restored = saved;
+    restoredAt.value = savedAt;
+    pendingKey.value = submissionKey;
   }
 
-  watch(
-    [key, () => options.ready()],
-    ([target, ready]) => {
-      if (target !== offered.value) offered.value = null;
-      if (target && ready && offered.value === null) void offer(target);
-    },
-    { immediate: true },
-  );
+  async function begin(): Promise<void> {
+    const scope = deskHost().draftScope?.() ?? null;
+    if (!route || !scope) return;
+    const path = route.path;
+    const target = `${scope}|${path}`;
+    const key = urlKey.value;
+    if (!key) {
+      // Opened without a key (Add New, Edit, a link): the server record (or an empty form) wins; old drafts go.
+      await deskDraftStore().removePrefix(`${target}|`);
+    } else {
+      const entry = await readDeskDraft<T>(`${target}|${key}`);
+      if (route.path !== path) return;
+      if (entry) await restore(entry.value, entry.savedAt, entry.submissionKey);
+    }
+    page.value = target;
+  }
+
+  /** On every `reset()`: the first is the load; a later one before any input puts a restored draft on again. */
+  function loaded(): void {
+    if (page.value === null) {
+      void begin();
+    } else if (restored !== null && !form.touched()) {
+      form.takeBaseline();
+      void form.apply(restored);
+    } else {
+      restored = null;
+    }
+  }
+
+  // Another record on the same component (a param change): it starts again with its own load.
+  if (route) {
+    watch(
+      () => route.path,
+      () => {
+        page.value = null;
+        restored = null;
+        restoredAt.value = null;
+      },
+    );
+  }
 
   const wanted = computed<Wanted | null>(() => {
-    const target = offered.value;
-    if (!target || target !== key.value) return null;
-    return {
-      key: target,
-      text: isDirty() ? JSON.stringify(options.read(), withoutFiles) : null,
-      submissionKey: pendingKey.value,
-    };
+    if (!page.value) return null;
+    return { key: urlKey.value ?? '', text: form.dirty() ? asText(form.read()) : null, submissionKey: pendingKey.value };
   });
 
   let waiting: Wanted | null = null;
   let timer: ReturnType<typeof setTimeout> | null = null;
   let writing: Promise<void> = Promise.resolve();
 
+  /** A dirty form without a key yet gets one in its URL (no new history entry). */
+  function keyFor(next: Wanted): string {
+    if (next.key) return next.key;
+    const key = deskUuid();
+    if (router && route) void router.replace({ query: { ...route.query, [DESK_DRAFT_QUERY_KEY]: key } });
+    return key;
+  }
+
+  /** A clean form's key leaves the URL, unless the page is being left (a save that goes back to the list). */
+  function dropUrlKey(): void {
+    setTimeout(() => {
+      if (!router || !route || navigating || !urlKey.value || form.dirty() || page.value !== `${deskHost().draftScope?.() ?? ''}|${route.path}`) return;
+      const query = { ...route.query };
+      delete query[DESK_DRAFT_QUERY_KEY];
+      void router.replace({ query });
+    }, 0);
+  }
+
   function write(next: Wanted): Promise<void> {
     const store = deskDraftStore();
-    writing = writing.then(() =>
-      next.text === null ? store.remove(next.key) : store.write({ key: next.key, savedAt: Date.now(), value: JSON.parse(next.text) as unknown, submissionKey: next.submissionKey }),
-    );
+    const owner = page.value;
+    if (!owner) return writing;
+    if (next.text === null) {
+      if (!next.key) return writing;
+      dropUrlKey();
+      writing = writing.then(() => store.remove(`${owner}|${next.key}`));
+      return writing;
+    }
+    const entry = { key: `${owner}|${keyFor(next)}`, savedAt: Date.now(), value: JSON.parse(next.text) as unknown, submissionKey: next.submissionKey };
+    writing = writing.then(() => store.write(entry));
     return writing;
   }
 
@@ -144,21 +200,22 @@ export function useDeskDraft<T>(options: DeskDraftOptions<T>): DeskDraft {
   }
 
   watch(wanted, (next, before) => {
-    if (!next || (before && before.key === next.key && before.text === next.text && before.submissionKey === next.submissionKey)) return;
+    if (!next) return;
+    // The key arriving in the URL for a draft just written is not a change.
+    if (before && before.text === next.text && before.submissionKey === next.submissionKey && (before.key === next.key || !before.key)) return;
     waiting = next;
     if (timer) clearTimeout(timer);
-    timer = setTimeout(() => void flush(), delay);
+    timer = setTimeout(() => void flush(), WRITE_DELAY);
   });
 
   async function discard(): Promise<void> {
-    if (timer) clearTimeout(timer);
-    timer = null;
-    waiting = null;
+    if (loadedText !== null) await form.apply(JSON.parse(loadedText) as T);
+    form.takeBaseline();
+    restored = null;
+    loadedText = null;
     restoredAt.value = null;
     pendingKey.value = null;
-    const target = offered.value ?? key.value;
-    await writing;
-    if (target) await deskDraftStore().remove(target);
+    // The form is clean now: the watcher removes the draft and its URL key.
   }
 
   async function submit<R>(save: (idempotencyKey: string) => Promise<R>): Promise<R> {
@@ -174,16 +231,24 @@ export function useDeskDraft<T>(options: DeskDraftOptions<T>): DeskDraft {
     }
   }
 
-  if (getCurrentInstance()) {
+  if (router) {
+    const offBefore = router.beforeEach(() => {
+      navigating = true;
+    });
+    const offAfter = router.afterEach(() => {
+      navigating = false;
+    });
     // A reload or a closed tab does not unmount: the last change is written on the way out.
     const out = () => void flush();
     window.addEventListener('pagehide', out);
     onBeforeUnmount(() => {
+      offBefore();
+      offAfter();
       window.removeEventListener('pagehide', out);
-      // Leaving the page in the app is a decision (a dirty form asked first): its draft goes.
-      void discard();
+      // Leaving in the app keeps the draft under its URL key (Back brings both back) until it expires.
+      void flush();
     });
   }
 
-  return { restoredAt, discard, flush, submit, pendingKey };
+  return { restoredAt, pendingKey, submit, discard, flush, loaded };
 }

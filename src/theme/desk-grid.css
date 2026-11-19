@@ -1735,6 +1735,30 @@ body.desk-col-dragging {
   font-size: var(--desk-font);
 }
 
+/* A draft restored after a reload (`form/draft.ts`): said once, with the way back to the saved record. */
+.desk-form-draft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 10px;
+  margin-bottom: 4px;
+  background: var(--desk-filter-bg);
+  border: 1px solid var(--desk-tone-info);
+  border-left-width: 4px;
+  font-size: var(--desk-font);
+  color: var(--desk-text);
+}
+
+.desk-form-draft__discard {
+  font: inherit;
+  color: var(--desk-link);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
 .desk-toasts {
   position: fixed;
   right: 12px;

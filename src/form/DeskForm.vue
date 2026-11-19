@@ -1,5 +1,9 @@
 <template>
   <form ref="rootEl" class="desk-form" @submit.prevent="onSubmit" @pointerdown.capture="arm" @keydown.capture="arm">
+    <div v-if="restoredAt !== null" class="desk-form-draft" data-desk-draft role="status">
+      <span>Unsaved changes from {{ restoredAt }} restored.</span>
+      <button type="button" class="desk-form-draft__discard" data-desk-action="form-draft-discard" @click="discardDraft">Discard them</button>
+    </div>
     <div v-if="display === 'header' && toasts.length > 0" class="desk-form-issues" role="alert">
       <div v-for="issue in toasts" :key="`${issue.fieldId ?? ''}|${issue.message}`" class="desk-form-issue desk-error">{{ issue.message }}</div>
     </div>
@@ -20,6 +24,7 @@ import { DESK_FORM_ISSUES, unplacedIssues, type DeskIssue, type DeskIssueTabs } 
 import { DESK_UNPLACED_ISSUES } from './issueDisplay';
 import { commitOpenEditors } from './openEditors';
 import { useDeskDirty } from './leaveGuard';
+import { deskHost } from '../host';
 import { useDeskAutomationNode } from '../automation/registry';
 import { deskEvent } from '../automation/events';
 
@@ -76,6 +81,16 @@ if (tracker) {
 
 function arm(): void {
   tracker?.arm();
+}
+
+/** When the restored draft was saved, as the host's locale writes a time; null when none is on the form. */
+const restoredAt = computed(() => {
+  const at = tracker?.draft.restoredAt.value;
+  return at ? new Date(at).toLocaleString(deskHost().locale?.(), { dateStyle: 'medium', timeStyle: 'short' }) : null;
+});
+
+function discardDraft(): void {
+  void tracker?.draft.discard();
 }
 
 useDeskLayer({

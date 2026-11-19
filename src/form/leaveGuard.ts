@@ -2,6 +2,7 @@ import { onBeforeUnmount, ref, shallowRef, watch, type Ref } from 'vue';
 import { onBeforeRouteLeave, onBeforeRouteUpdate, type RouteLocationNormalized } from 'vue-router';
 import { inDeskPageDialog } from '../page/pageContext';
 import { TAB_QUERY_KEY } from './deskTabRoute';
+import { DESK_DRAFT_QUERY_KEY } from './draftQuery';
 
 /**
  * Unsaved-changes check shared by every desk page and both hosts. It only needs Vue, so the
@@ -95,11 +96,12 @@ export async function saveAndLeave(): Promise<void> {
   }
 }
 
-/** A `?tab=` write from `DeskTabs` stays on the same record, so it does not leave the page. */
+/** A `?tab=` write from `DeskTabs` or a form's `?draft=` key stays on the same record, so it does not leave the page. */
 function onlyTabChanged(to: RouteLocationNormalized, from: RouteLocationNormalized): boolean {
   if (to.path !== from.path || to.hash !== from.hash) return false;
   const keys = new Set([...Object.keys(to.query), ...Object.keys(from.query)]);
   keys.delete(TAB_QUERY_KEY);
+  keys.delete(DESK_DRAFT_QUERY_KEY);
   for (const key of keys) {
     if (String(to.query[key]) !== String(from.query[key])) return false;
   }

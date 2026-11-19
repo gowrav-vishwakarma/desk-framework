@@ -1,5 +1,6 @@
 import { computed, getCurrentInstance, inject, nextTick, onBeforeUnmount, ref, shallowReactive, shallowRef, watch, type ComputedRef, type InjectionKey } from 'vue';
 import { confirmDeskDiscard } from './leaveGuard';
+import { useDeskFormDraft, type DeskDraft, type DeskDraftOptions } from './draft';
 
 /**
  * Unsaved changes for one form. A form is one record, however many grids, tabs and settings
@@ -26,6 +27,8 @@ interface RegisteredPart extends DeskFormPart {
 export interface DeskFormDirty {
   /** The record differs from its baseline, or a part has unsaved work. */
   readonly dirty: ComputedRef<boolean>;
+  /** The form's draft (refresh-friendly) and the idempotency key of its save: `changes.draft.submit(save)`. */
+  readonly draft: DeskDraft;
   /** Top-level keys of the record that differ from their baseline. */
   readonly changed: ComputedRef<string[]>;
   isDirty(key: string): boolean;
@@ -70,12 +73,23 @@ function saveAll(parts: readonly DeskFormPart[]): (() => Promise<boolean>) | nul
   };
 }
 
-export function useDeskFormDirty<T extends object>(source: () => T, options: { ignore?: readonly (keyof T & string)[] } = {}): DeskFormDirty {
+export interface DeskFormDirtyOptions<T> {
+  ignore?: readonly (keyof T & string)[];
+  /**
+   * The form's draft (`form/draft.ts`), on by default: `false` keeps none; `read` / `apply` when the source is not
+   * the record itself (a copy without server-only fields) or the record loads in parts.
+   */
+  draft?: false | DeskDraftOptions<unknown>;
+}
+
+export function useDeskFormDirty<T extends object>(source: () => T, options: DeskFormDirtyOptions<T> = {}): DeskFormDirty {
   const ignored = new Set<string>(options.ignore ?? []);
   const current = computed(() => snapshot(source(), ignored));
   const baseline = shallowRef(current.value);
   const quiet = ref(true);
   const parts = shallowReactive<RegisteredPart[]>([]);
+  /** The user typed or clicked since the last baseline a draft took. */
+  let touched = false;
 
   watch(current, (now) => {
     if (quiet.value) baseline.value = now;
@@ -102,17 +116,36 @@ export function useDeskFormDirty<T extends object>(source: () => T, options: { i
     baseline.value = next;
   }
 
+  const draftOptions = options.draft || {};
+  const draft = useDeskFormDraft<unknown>(
+    {
+      read: draftOptions.read ?? source,
+      apply: draftOptions.apply ?? ((saved) => void Object.assign(source(), saved)),
+      dirty: () => dirty.value,
+      takeBaseline() {
+        baseline.value = current.value;
+        quiet.value = false;
+        touched = false;
+      },
+      touched: () => touched,
+    },
+    options.draft !== false,
+  );
+
   return {
+    draft,
     dirty,
     changed,
     isDirty: (key) => changed.value.includes(key),
     arm() {
+      touched = true;
       if (!quiet.value) return;
       baseline.value = current.value;
       quiet.value = false;
     },
     reset() {
       baseline.value = current.value;
+      draft.loaded();
     },
     rebase,
     async settle(keys, run) {

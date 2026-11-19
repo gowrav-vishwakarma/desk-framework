@@ -57,7 +57,7 @@ export interface DeskHost {
    */
   prefs?: DeskPrefStore;
   /**
-   * Whose drafts a form keeps (`useDeskDraft`): a text naming the company and the user, such as `c7:u3`, so one
+   * Whose drafts a form keeps (`form/draft.ts`): a text naming the company and the user, such as `c7:u3`, so one
    * user never restores another's form. Null (or left out) keeps no drafts.
    */
   draftScope?: () => string | null;
