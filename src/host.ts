@@ -64,6 +64,12 @@ export interface DeskHost {
   /** Where drafts are kept. Leave it out for the IndexedDB default; tests pass `createMemoryDraftStore()`. */
   drafts?: DeskDraftStore;
   /**
+   * Whether a failed save was answered by the server (refused, timed out): a draft's next save is then a new
+   * submission with a new idempotency key. Without it every failure keeps the key (the outcome counts as unknown,
+   * as for a lost connection or an aborted call).
+   */
+  submitAnswered?: (error: unknown) => boolean;
+  /**
    * Turns on the automation driver (`window.__desk`) for tests and AI agents. Off when missing.
    * See `automation/` and the framework README.
    */

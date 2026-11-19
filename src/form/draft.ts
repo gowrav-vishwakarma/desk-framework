@@ -1,12 +1,12 @@
 import { computed, getCurrentInstance, onBeforeUnmount, ref, watch, type Ref } from 'vue';
 import { deskHost } from '../host';
 import { deskDraftStore, readDeskDraft } from '../storage/deskDrafts';
-import type { DeskSubmission } from '../request/submission';
+import { deskUuid } from '../request/uuid';
 import { askDeskConfirm } from './confirm';
 import type { DeskFormDirty } from './formDirty';
 
 /**
- * A refresh-friendly form: while it has unsaved changes, its unsent values (and the idempotency key of a submit
+ * A refresh-friendly form: while it has unsaved changes, its unsent values (and the idempotency key of a save
  * whose answer never came) are kept on this computer, so an accidental reload or a closed tab does not lose them.
  * When the page opens the same record again, the form asks whether to restore them (Enter restores, Escape
  * discards). Opt in per form; see "Drafts" in the framework README.
@@ -22,14 +22,12 @@ export interface DeskDraftOptions<T> {
   record: () => string | number | null;
   /** The form finished loading its record and defaults: a kept draft is offered then, over them. */
   ready: () => boolean;
-  /** The unsent form as plain JSON (files and functions are not kept). */
+  /** The unsent form as plain JSON. Files (any `Blob`) are left out: `apply` keeps what the form loaded for them. */
   read: () => T;
   /** Puts a restored draft on the form. */
   apply: (value: T) => void | Promise<void>;
   /** The form's tracker, or a flag: a draft is kept only while the form has unsaved changes. */
   dirty: DeskFormDirty | (() => boolean);
-  /** The form's submission: its pending key is kept with the draft and comes back with it. */
-  submission?: DeskSubmission;
   /** The restore question. Resolves true to restore. Default: `askDeskConfirm`. */
   ask?: (savedAt: number) => Promise<boolean>;
   /** Milliseconds a change waits before it is written, so typing writes once. Default 300. */
@@ -43,6 +41,15 @@ export interface DeskDraft {
   discard(): Promise<void>;
   /** Writes a change still waiting for its delay. */
   flush(): Promise<void>;
+  /**
+   * Runs the form's save with its idempotency key (the host's client sends it as `Idempotency-Key`). The key is
+   * the pending one (a save whose answer never came, also from a restored draft), else a new one; it is kept with
+   * the draft. Success clears it; so does a failure the server answered (host `submitAnswered`). A lost answer or
+   * an aborted call keeps it, so the next Save repeats the same submission and is answered, not saved twice.
+   */
+  submit<R>(save: (idempotencyKey: string) => Promise<R>): Promise<R>;
+  /** The pending idempotency key, or null. */
+  readonly pendingKey: Ref<string | null>;
 }
 
 interface Wanted {
@@ -50,6 +57,11 @@ interface Wanted {
   /** The draft as JSON text, or null to keep none. */
   text: string | null;
   submissionKey: string | null;
+}
+
+/** Files cannot be kept as JSON (they would come back as `{}`): a draft leaves them out. */
+function withoutFiles(_key: string, value: unknown): unknown {
+  return typeof Blob !== 'undefined' && value instanceof Blob ? undefined : value;
 }
 
 function askRestore(savedAt: number): Promise<boolean> {
@@ -65,6 +77,7 @@ function askRestore(savedAt: number): Promise<boolean> {
 export function useDeskDraft<T>(options: DeskDraftOptions<T>): DeskDraft {
   const delay = options.delay ?? 300;
   const restoredAt = ref<number | null>(null);
+  const pendingKey = ref<string | null>(null);
   /** The key whose kept draft was offered: from then on the form's changes are kept under it. */
   const offered = ref<string | null>(null);
   const isDirty = (): boolean => (typeof options.dirty === 'function' ? options.dirty() : options.dirty.dirty.value);
@@ -82,7 +95,7 @@ export function useDeskDraft<T>(options: DeskDraftOptions<T>): DeskDraft {
       if (await (options.ask ?? askRestore)(entry.savedAt)) {
         if (typeof options.dirty !== 'function') options.dirty.arm();
         await options.apply(entry.value);
-        options.submission?.restore(entry.submissionKey);
+        pendingKey.value = entry.submissionKey;
         restoredAt.value = entry.savedAt;
       } else {
         await deskDraftStore().remove(target);
@@ -105,8 +118,8 @@ export function useDeskDraft<T>(options: DeskDraftOptions<T>): DeskDraft {
     if (!target || target !== key.value) return null;
     return {
       key: target,
-      text: isDirty() ? JSON.stringify(options.read()) : null,
-      submissionKey: options.submission?.key.value ?? null,
+      text: isDirty() ? JSON.stringify(options.read(), withoutFiles) : null,
+      submissionKey: pendingKey.value,
     };
   });
 
@@ -142,9 +155,23 @@ export function useDeskDraft<T>(options: DeskDraftOptions<T>): DeskDraft {
     timer = null;
     waiting = null;
     restoredAt.value = null;
+    pendingKey.value = null;
     const target = offered.value ?? key.value;
     await writing;
     if (target) await deskDraftStore().remove(target);
+  }
+
+  async function submit<R>(save: (idempotencyKey: string) => Promise<R>): Promise<R> {
+    pendingKey.value ??= deskUuid();
+    const sent = pendingKey.value;
+    try {
+      const answer = await save(sent);
+      if (pendingKey.value === sent) pendingKey.value = null;
+      return answer;
+    } catch (error) {
+      if (pendingKey.value === sent && deskHost().submitAnswered?.(error)) pendingKey.value = null;
+      throw error;
+    }
   }
 
   if (getCurrentInstance()) {
@@ -158,5 +185,5 @@ export function useDeskDraft<T>(options: DeskDraftOptions<T>): DeskDraft {
     });
   }
 
-  return { restoredAt, discard, flush };
+  return { restoredAt, discard, flush, submit, pendingKey };
 }

@@ -199,28 +199,29 @@ The framework does not own the host's HTTP client; it owns the page, so it gives
 
 **An abort says nothing.** `deskIsAborted(error)` knows an abort (`AbortError`, axios `CanceledError` / `ERR_CANCELED`) from an answer. The host's error-to-words function answers an empty message for it, so no toast, header line or dialog shows it.
 
-**One submitted save, one key.** `useDeskSubmission()` holds a form's idempotency key: `take()` when a save is submitted (the pending key, or a new v4 UUID: `deskUuid()`, which also works on a plain-http page), `clear()` once the server answered, `restore(key)` from a draft. The host sends it on the write (`Idempotency-Key`) and decides when it is answered; every retry of the same submission (a second press after a lost answer, a wait while the server is still saving, a save after a restored draft) sends the same key, and the server answers a repeat with its first answer.
+**Idempotency keys.** The host's client gives every write its own key (`deskUuid()`: a v4 UUID, also on a plain-http page) and repeats the write with the same key while the server says the same save is still running or the answer was lost, so pages do nothing for it. Only a form that keeps a draft needs a key that outlives one call (a reload in between): `useDeskDraft` owns it (below).
 
 ## Drafts
 
 A refresh-friendly form keeps its unsent values on this computer while it has unsaved changes, so an accidental reload or a closed tab does not lose them (`form/draft.ts`). Opt in per form:
 
 ```ts
-const submission = useDeskSubmission();
-useDeskDraft({
+const draft = useDeskDraft({
   page: 'payment',
   record: () => (isEdit.value ? String(page.params.id) : 'new'),
   ready: () => loaded.value, // the record and its defaults are on the form
   read: () => form.value, // plain JSON; files are not kept
   apply: (saved) => { form.value = saved; },
   dirty: changes, // the form's useDeskFormDirty tracker (or a flag)
-  submission, // its pending key is kept and restored with the draft
 });
+// The save: the draft's idempotency key, sent by the host's client as `Idempotency-Key`.
+await draft.submit((key) => http.post(url, body, { headers: { 'Idempotency-Key': key } }));
 ```
 
 - **Keyed** by the host's `draftScope` (`configureDesk({ draftScope: () => 'c7:u3' })`: company and user), the page and the record. No scope: no drafts.
-- **Kept** while the form is dirty (written 300 ms after the last change, and on `pagehide`), with the submission's pending key.
-- **Offered** when the page opens the same record again and is `ready`: `askDeskConfirm` "Restore unsaved changes?" (Enter **Restore**, Escape **Discard**). Restore arms the tracker, applies the values (the form is dirty again) and puts the key back, so Save repeats a submission whose answer never came instead of saving twice. `restoredAt` tells the page when the restored draft was saved.
+- **Kept** while the form is dirty (written 300 ms after the last change, and on `pagehide`), with the pending idempotency key.
+- **One key per submission.** `submit(save)` passes the pending key (else a new one) and keeps it with the draft. Success ends the submission; so does a failure the server answered (host `submitAnswered(error)`, e.g. a refusal or a timeout: the next save is new). A lost answer or an aborted call keeps the key, so the next Save (also after a reload) repeats the same submission and the server answers it instead of saving twice. `discard()` drops the key too.
+- **Offered** when the page opens the same record again and is `ready`: `askDeskConfirm` "Restore unsaved changes?" (Enter **Restore**, Escape **Discard**). Restore arms the tracker, applies the values (the form is dirty again) and puts the key back. `restoredAt` tells the page when the restored draft was saved.
 - **Gone** when the form is clean again (saved, or loaded fresh), on Discard or `discard()`, when the page is left in the app (unmount: the leave question already asked), at logout (`clearDeskDrafts()`), and after a day (`DESK_DRAFT_MAX_AGE_MS`, the server's idempotency window): expired drafts are removed whenever a draft is read.
 - **Stored** in IndexedDB (`desk-drafts`, `storage/deskDrafts.ts`); a host or test passes another `DeskDraftStore` as `configureDesk({ drafts })`, such as `createMemoryDraftStore()` (one store kept across a remount stands for a reload in a test).
 
@@ -503,7 +504,7 @@ Shortcuts (`desk.keys.<user id>`), the chosen theme (`desk-theme`), and UI font 
 | `DeskLookupConfig`: how a box looks and behaves                             | `AnkpalLookup`: model, endpoint, where, attributes, `searchLookup` |
 | The theme list, `registerDeskTheme`, and `--desk-danger`                    | The Ankpal theme and its CSS                                       |
 | `askDeskConfirm` and `DeskConfirmHost`                                      | Which actions confirm, and the words on the question               |
-| Page abort, `useDeskLatest`, `useDeskSubmission`, `useDeskDraft`           | The HTTP client that sends the signal and the key, the answers' words, which forms keep drafts |
+| Page abort, `useDeskLatest`, `deskUuid`, `useDeskDraft`                     | The HTTP client that sends the signal and the keys, retries, the answers' words, which forms keep drafts |
 | `PivotDesigner` and its engine                                              | The fields, their labels and formats, the starting layout, drill   |
 
 **Pivot calculated fields.** "ƒx Calculated field…" in the field pane opens `PivotCalcEditor`: a name, a formula over other number fields (`[Gross profit] / [Taxable value] * 100`; fields by label or id in brackets, numbers, `+ - * /`, brackets), a live check that marks the mistake, field and operator buttons, Number or Percent, and the grand total over the loaded rows. A calculated field lives in the layout (`layout.calculated`, `pivotCalc.ts`) and goes to Values only. Each cell works it out from that cell's own sums, so a group's GP % is its GP over its sales, never a sum of percentages; dividing by zero leaves the cell empty. Totals, subtotals, "show as" shares and the colour scale apply as for any value. `pivotLayoutFields` lists the fields its formula reads (`refs`), so a page that loads only used fields loads those. **Grouped facts.** `PivotDesigner` takes `grouped` (key column ids) when its facts are grouped rows, such as a server's summary: each stands for `__rows` rows, a key's value counts once per row, and a value column brings its sum, count, min and max (`<f>`, `<f>__n`, `<f>__min`, `<f>__max`). Every figure, calculated fields and shares included, comes out as from the rows themselves, as long as a distinct count's field is a key. **Kept data.** `storage/deskDataCache.ts` keeps large page data (one IndexedDB record per key with `savedAt`, at most 40, oldest dropped); unlike `deskPrefs` it is company data, which the host clears at logout. Both it and the draft store use the shared IndexedDB plumbing in `storage/idb.ts`. The host gets `start` (a starting layout, such as a saved pivot's), `remember` (off: never read or write the user's layout) and the `layout` event (the layout on screen, at first and after each change).

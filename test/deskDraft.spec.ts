@@ -4,7 +4,6 @@ import { mount, type VueWrapper } from '@vue/test-utils';
 import { configureDesk } from '../src/host';
 import { useDeskDraft, type DeskDraft } from '../src/form/draft';
 import { useDeskFormDirty, type DeskFormDirty } from '../src/form/formDirty';
-import { useDeskSubmission, type DeskSubmission } from '../src/request/submission';
 import { createMemoryDraftStore, DESK_DRAFT_MAX_AGE_MS, type DeskDraftStore } from '../src/storage/deskDrafts';
 
 let store: DeskDraftStore;
@@ -20,7 +19,6 @@ interface Opened {
   wrapper: VueWrapper;
   form: { name: string; amount: number };
   changes: DeskFormDirty;
-  submission: DeskSubmission;
   draft: DeskDraft;
   ask: ReturnType<typeof vi.fn>;
 }
@@ -33,7 +31,6 @@ async function open(record: string, restore = true): Promise<Opened> {
     setup() {
       const form = reactive({ name: '', amount: 0 });
       const changes = useDeskFormDirty(() => form);
-      const submission = useDeskSubmission();
       const draft = useDeskDraft({
         page: 'payment',
         record: () => record,
@@ -41,11 +38,10 @@ async function open(record: string, restore = true): Promise<Opened> {
         read: () => ({ ...form }),
         apply: (saved) => void Object.assign(form, saved),
         dirty: changes,
-        submission,
         ask,
         delay: 0,
       });
-      made = { form, changes, submission, draft };
+      made = { form, changes, draft };
       return () => null;
     },
   });
@@ -73,7 +69,13 @@ describe('desk drafts', () => {
     const first = await open('new');
     expect(first.ask).not.toHaveBeenCalled();
     await type(first, 'Rent');
-    const key = first.submission.take();
+    // A save whose answer never came: its key stays with the draft.
+    let key = '';
+    const lost = first.draft.submit((sent) => {
+      key = sent;
+      return Promise.reject(new Error('Network Error'));
+    });
+    await expect(lost).rejects.toThrow('Network Error');
     await settle();
     await first.draft.flush();
     expect((await store.read('c1:u1|payment|new'))?.value).toEqual({ name: 'Rent', amount: 250 });
@@ -81,9 +83,43 @@ describe('desk drafts', () => {
     const reloaded = await open('new');
     expect(reloaded.ask).toHaveBeenCalledTimes(1);
     expect(reloaded.form).toEqual({ name: 'Rent', amount: 250 });
-    expect(reloaded.submission.key.value).toBe(key);
+    expect(reloaded.draft.pendingKey.value).toBe(key);
+    // The save after the reload repeats that submission; its success ends it.
+    const sent: string[] = [];
+    await reloaded.draft.submit((sent_) => {
+      sent.push(sent_);
+      return Promise.resolve();
+    });
+    expect(sent).toEqual([key]);
+    expect(reloaded.draft.pendingKey.value).toBeNull();
     expect(reloaded.changes.dirty.value).toBe(true);
     expect(reloaded.draft.restoredAt.value).not.toBeNull();
+  });
+
+  it('one key per submission: the same on a retry with no answer, new after success or an answer the host names', async () => {
+    const page = await open('5');
+    const keys: string[] = [];
+    const fail = (error: Error) => (key: string) => {
+      keys.push(key);
+      return Promise.reject(error);
+    };
+    const succeed = (key: string) => {
+      keys.push(key);
+      return Promise.resolve('saved');
+    };
+    await page.draft.submit(fail(new Error('Network Error'))).catch(() => undefined);
+    await expect(page.draft.submit(succeed)).resolves.toBe('saved');
+    await page.draft.submit(succeed);
+    expect(keys[0]).toBe(keys[1]);
+    expect(keys[2]).not.toBe(keys[1]);
+
+    configureDesk({ presets: {}, presetLabels: [], defaultPreset: '', label: (id) => id, draftScope: () => scope, drafts: store, submitAnswered: (error) => (error as Error).message === 'Refused' });
+    await page.draft.submit(fail(new Error('Refused'))).catch(() => undefined);
+    expect(page.draft.pendingKey.value).toBeNull();
+    await page.draft.submit(fail(new Error('Network Error'))).catch(() => undefined);
+    expect(page.draft.pendingKey.value).toBe(keys[4]);
+    await page.draft.discard();
+    expect(page.draft.pendingKey.value).toBeNull();
   });
 
   it('a clean form keeps nothing: a save (reset) clears the draft', async () => {
@@ -136,6 +172,16 @@ describe('desk drafts', () => {
     expect(page.ask).not.toHaveBeenCalled();
     expect(page.form.name).toBe('');
     expect(await store.read('c1:u1|receipt|3')).toBeNull();
+  });
+
+  it('leaves files out of a draft', async () => {
+    const page = await open('7');
+    page.changes.arm();
+    (page.form as Record<string, unknown>).image = new File(['x'], 'qr.png');
+    page.form.name = 'Rent';
+    await settle();
+    await page.draft.flush();
+    expect((await store.read('c1:u1|payment|7'))?.value).toEqual({ name: 'Rent', amount: 0 });
   });
 
   it('keeps nothing without a scope (signed out)', async () => {

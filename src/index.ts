@@ -45,7 +45,7 @@ export { useDeskDraft, type DeskDraft, type DeskDraftOptions } from './form/draf
 export { clearDeskDrafts, createIndexedDbDraftStore, createMemoryDraftStore, DESK_DRAFT_MAX_AGE_MS, type DeskDraftEntry, type DeskDraftStore } from './storage/deskDrafts';
 export { deskIsAborted, deskPageSignal, deskSharedSignal, installDeskPageAbort, linkDeskAbort, type DeskPageKey } from './request/pageAbort';
 export { useDeskLatest, type DeskLatest } from './request/latest';
-export { deskUuid, useDeskSubmission, type DeskSubmission } from './request/submission';
+export { deskUuid } from './request/uuid';
 export { default as DeskPageDialogHost } from './page/DeskPageDialogHost.vue';
 export { openDeskPage } from './page/openDeskPage';
 export { useDeskPage } from './page/pageContext';

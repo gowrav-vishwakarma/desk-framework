@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { createMemoryHistory, createRouter, type Router } from 'vue-router';
 import { deskIsAborted, deskPageSignal, deskSharedSignal, installDeskPageAbort } from '../src/request/pageAbort';
 import { useDeskLatest } from '../src/request/latest';
-import { deskUuid, useDeskSubmission } from '../src/request/submission';
+import { deskUuid } from '../src/request/uuid';
 
 const page = { render: () => null };
 
@@ -147,20 +147,7 @@ describe('latest run', () => {
   });
 });
 
-describe('submission key', () => {
-  it('one key per submission: kept until cleared, restored from a draft, new after clear', () => {
-    const submission = useDeskSubmission();
-    expect(submission.key.value).toBeNull();
-    const first = submission.take();
-    expect(first).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
-    expect(submission.take()).toBe(first);
-    submission.clear();
-    const second = submission.take();
-    expect(second).not.toBe(first);
-    submission.restore(first);
-    expect(submission.take()).toBe(first);
-  });
-
+describe('uuid', () => {
   it('makes v4 UUIDs without randomUUID (an http page on the LAN)', () => {
     const original = crypto.randomUUID;
     Object.defineProperty(crypto, 'randomUUID', { value: undefined, configurable: true });
