@@ -1,10 +1,11 @@
+import 'fake-indexeddb/auto';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { defineComponent, nextTick, reactive } from 'vue';
 import { mount } from '@vue/test-utils';
 import { createMemoryHistory, createRouter, type Router } from 'vue-router';
 import { configureDesk } from '../src/host';
 import { useDeskFormDirty, type DeskFormDirty } from '../src/form/formDirty';
-import { createMemoryDraftStore, DESK_DRAFT_MAX_AGE_MS, type DeskDraftStore } from '../src/storage/deskDrafts';
+import { createIndexedDbDraftStore, createMemoryDraftStore, DESK_DRAFT_MAX_AGE_MS, readDeskDraft, type DeskDraftStore } from '../src/storage/deskDrafts';
 
 let store: DeskDraftStore;
 let scope = 'c1:u1';
@@ -221,5 +222,56 @@ describe('desk drafts: scope and limits', () => {
     expect(draft.pendingKey.value).toBeNull();
     await draft.submit(fail(new Error('Network Error'))).catch(() => undefined);
     expect(draft.pendingKey.value).toBe(keys[4]);
+  });
+});
+
+describe('the IndexedDB draft store', () => {
+  const entry = (key: string, savedAt = Date.now()) => ({ key, savedAt, value: { name: key, lines: [{ qty: 2 }] }, submissionKey: 'k-1' });
+
+  it('saves and restores a draft, replaces it, and removes it', async () => {
+    const idb = createIndexedDbDraftStore();
+    await idb.clear();
+    const saved = entry('c1:u1|/payment/add|a');
+    await idb.write(saved);
+    expect(await idb.read('c1:u1|/payment/add|a')).toEqual(saved);
+    await idb.write({ ...entry('c1:u1|/payment/add|a'), value: { name: 'changed', lines: [] } });
+    expect((await idb.read('c1:u1|/payment/add|a'))?.value).toEqual({ name: 'changed', lines: [] });
+    await idb.remove('c1:u1|/payment/add|a');
+    expect(await idb.read('c1:u1|/payment/add|a')).toBeNull();
+  });
+
+  it("drops one page's drafts without touching another company's, user's or page's", async () => {
+    const idb = createIndexedDbDraftStore();
+    await idb.clear();
+    for (const key of ['c1:u1|/payment/edit/7|a', 'c1:u1|/payment/edit/7|b', 'c1:u1|/payment/edit/8|a', 'c2:u1|/payment/edit/7|a', 'c1:u2|/payment/edit/7|a']) await idb.write(entry(key));
+    await idb.removePrefix('c1:u1|/payment/edit/7|');
+    expect(await idb.read('c1:u1|/payment/edit/7|a')).toBeNull();
+    expect(await idb.read('c1:u1|/payment/edit/7|b')).toBeNull();
+    for (const key of ['c1:u1|/payment/edit/8|a', 'c2:u1|/payment/edit/7|a', 'c1:u2|/payment/edit/7|a']) expect(await idb.read(key)).not.toBeNull();
+    await idb.clear();
+    expect(await idb.read('c1:u1|/payment/edit/8|a')).toBeNull();
+  });
+
+  it('expires drafts older than a day when drafts are read', async () => {
+    const idb = createIndexedDbDraftStore();
+    await idb.clear();
+    configureDesk({ presets: {}, presetLabels: [], defaultPreset: '', label: (id) => id, draftScope: () => scope, drafts: idb });
+    await idb.write(entry('c1:u1|/payment/add|old', Date.now() - DESK_DRAFT_MAX_AGE_MS - 1000));
+    await idb.write(entry('c1:u1|/receipt/add|old', Date.now() - DESK_DRAFT_MAX_AGE_MS - 1000));
+    await idb.write(entry('c1:u1|/payment/add|fresh'));
+    expect(await readDeskDraft('c1:u1|/payment/add|old')).toBeNull();
+    expect(await idb.read('c1:u1|/receipt/add|old')).toBeNull();
+    expect((await readDeskDraft('c1:u1|/payment/add|fresh'))?.submissionKey).toBe('k-1');
+  });
+
+  it('a form restores its draft from IndexedDB after a reload', async () => {
+    const idb = createIndexedDbDraftStore();
+    await idb.clear();
+    store = idb;
+    configureDesk({ presets: {}, presetLabels: [], defaultPreset: '', label: (id) => id, draftScope: () => scope, drafts: idb });
+    const page = await open('/c/1/payment/edit/7');
+    await type(page, 'Rent, corrected');
+    const reloaded = await open(`/c/1/payment/edit/7?draft=${draftKey(page)}`);
+    expect(reloaded.form).toEqual({ name: 'Rent, corrected', amount: 250 });
   });
 });
