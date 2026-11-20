@@ -24,6 +24,8 @@ export const deskLocators = {
   rowMore: '.desk-row-actions-more',
   /** An item of the open context menu by its id. */
   menuItem: (id: string): string => `.desk-context-menu [data-desk-menu-item="${id}"]`,
+  /** The shell's main menu bar (`DeskShell` header). */
+  shellMenuBar: '.desk-top',
   /** A `DeskMenuBar`'s top buttons (inside the bar's container). */
   menuBarTop: '.desk-menu-item > button',
   /** A grid row (body) and the text of its cells. */
