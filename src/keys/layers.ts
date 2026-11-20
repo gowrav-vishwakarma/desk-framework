@@ -33,6 +33,11 @@ export interface DeskKeyHandler {
   run: () => void;
   /** Still runs while a modal layer (a dialog) is open above this one. */
   always?: boolean;
+  /**
+   * Whether the handler applies now. When it does not, the key goes on to the layers below, as if it were not
+   * registered: a grid with no filter row leaves Ctrl+F to its page's filter panel.
+   */
+  when?: () => boolean;
 }
 
 export type DeskHandlerInput = (() => void) | DeskKeyHandler;
@@ -146,7 +151,7 @@ export function addDeskFields(layer: DeskLayer, fields: DeskFocusField[]): () =>
 }
 
 /**
- * First handler for any of the action ids, walking from the top layer down.
+ * First handler for any of the action ids, walking from the top layer down; a handler whose `when` says no is passed by.
  * Below a modal layer only handlers marked `always` still run.
  */
 export function resolveLayerHandler(layers: readonly DeskLayer[], actionIds: readonly string[]): DeskKeyHandler | null {
@@ -156,7 +161,7 @@ export function resolveLayerHandler(layers: readonly DeskLayer[], actionIds: rea
     if (!layer) continue;
     for (const id of actionIds) {
       const handler = layer.handlers.get(id);
-      if (handler && (!blocked || handler.always)) return handler;
+      if (handler && (!blocked || handler.always) && (handler.when?.() ?? true)) return handler;
     }
     if (layer.modal) blocked = true;
   }

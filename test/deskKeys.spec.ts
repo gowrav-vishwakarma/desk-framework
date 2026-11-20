@@ -110,6 +110,18 @@ describe('desk layers', () => {
     expect(resolveLayerHandler([shell, page, dialog], ['desk-keys'])).toBe(keys);
   });
 
+  it('passes a key on to the layers below when the top handler says it does not apply now', () => {
+    const page = layer(false, { 'action-filter': vi.fn() });
+    const off = { run: vi.fn(), when: () => false };
+    const on = { run: vi.fn(), when: () => true };
+    const grid = createDeskLayer();
+    addDeskHandlers(grid, { 'action-filter': off });
+    // A grid with no filter row: Ctrl+F opens the page's filter panel.
+    expect(resolveLayerHandler([page, grid], ['action-filter'])).toBe(page.handlers.get('action-filter'));
+    addDeskHandlers(grid, { 'action-filter': on });
+    expect(resolveLayerHandler([page, grid], ['action-filter'])).toBe(on);
+  });
+
   it('removes only the handlers a registration added', () => {
     const page = createDeskLayer();
     const first = vi.fn();
