@@ -27,7 +27,7 @@ import { deskFixtureDefs, type DeskFixtures } from '@desk/framework/testkit';
 export const test = base.extend<DeskFixtures>(deskFixtureDefs());
 
 test('open the account list', async ({ page, user, desk }) => {
-  await page.goto('/#/company/1/branch/1/desk');
+  await page.goto('/company/1/branch/1/desk');
   await user.go('account-list');
   const rows = await user.rows('grid:account-list-grid');
   expect(rows.length).toBeGreaterThan(0);

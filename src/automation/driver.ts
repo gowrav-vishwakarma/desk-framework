@@ -90,7 +90,7 @@ export function createDeskDriver() {
         return {
           ok: false,
           error: 'no Desk nodes are registered on this page',
-          reason: deskAutomationEnabled() ? `the page at ${window.location.hash} registered nothing yet; wait_idle, then try again` : 'automation is off on this page',
+          reason: deskAutomationEnabled() ? `the page at ${window.location.pathname}${window.location.hash} registered nothing yet; wait_idle, then try again` : 'automation is off on this page',
           pending: pendingDeskWork(),
         };
       }
