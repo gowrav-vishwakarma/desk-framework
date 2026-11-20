@@ -2865,15 +2865,13 @@ function onRowKey(event: KeyboardEvent): boolean {
   return false;
 }
 
-/** Ctrl+F: the filter row of the cursor column, when the grid shows one. */
-const hasFilterRow = (): boolean => props.mode === 'list' && props.showFilter && props.filterShortcut;
+/** Ctrl+F: the filter row of the cursor column. */
 function focusFilterRow(): void {
-  if (!hasFilterRow()) return;
+  if (props.mode !== 'list' || !props.showFilter || !props.filterShortcut) return;
   const inputs = scroller.value?.querySelectorAll<HTMLInputElement>('td.column-filter input');
   inputs?.[Math.min(cursor.value.col, inputs.length - 1)]?.focus();
 }
-// A grid with no filter row leaves Ctrl+F to its page (the page's filter panel opens).
-if (props.filterShortcut) useDeskLayer({ handlers: { 'action-filter': { run: focusFilterRow, when: hasFilterRow } } });
+if (props.filterShortcut) useDeskLayer({ handlers: { 'action-filter': focusFilterRow } });
 
 function focusFirstRow(): void {
   void moveTo(0, cursor.value.col, false).then(() => focusGrid());

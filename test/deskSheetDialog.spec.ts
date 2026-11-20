@@ -94,28 +94,6 @@ describe('settings sheet marks', () => {
   });
 });
 
-describe('settings sheet: clearing an optional pick', () => {
-  const lookup = { labelKey: 'name', valueKey: 'id', columns: [] };
-  /** Delete on the cell reached by keyboard (a click opens the editor, whose list starts with "---" for the same). */
-  const deleteOn = async (required: boolean) => {
-    const wrapper = mount(DeskSettingsGrid, {
-      attachTo: document.body,
-      props: { rows: sectionRows('s', 'Section', [{ key: 'who', label: 'Who', editor: 'lookup', lookup, required }]), read: () => ({ id: 1, name: 'Item A' }) },
-    });
-    const grid = wrapper.get('.table-content');
-    await grid.trigger('focus');
-    await grid.trigger('keydown', { key: 'Delete' });
-    const changes = wrapper.emitted('change') ?? [];
-    wrapper.unmount();
-    return changes;
-  };
-
-  it('Delete empties an optional lookup (as it does chips); a required one keeps its value', async () => {
-    expect(await deleteOn(false)).toEqual([['who', null]]);
-    expect(await deleteOn(true)).toEqual([]);
-  });
-});
-
 describe('settings sheet long values', () => {
   it('cuts a long value in the middle and keeps the full text on the cell', async () => {
     const long = `${'a'.repeat(20)}MIDDLE${'b'.repeat(30)}`;

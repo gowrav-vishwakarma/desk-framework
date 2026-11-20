@@ -34,7 +34,7 @@ Then the dispatcher:
 1. Builds the combo. It skips repeated and IME keys.
 2. While you type in an input, it skips bare keys (no Ctrl, Alt or Meta, and not F1 to F12) and copy, paste, cut, undo and redo.
 3. Finds the action ids bound to the combo.
-4. Walks the layers from the top down. The first layer with a handler for one of those ids wins. Below a modal layer, only `always` handlers count. A handler with `when: () => boolean` that answers false is passed by, so the key reaches the layers below (a grid without a filter row leaves Ctrl+F to its page's filter panel).
+4. Walks the layers from the top down. The first layer with a handler for one of those ids wins. Below a modal layer, only `always` handlers count.
 
 Ctrl+R and Ctrl+Shift+R are never taken.
 

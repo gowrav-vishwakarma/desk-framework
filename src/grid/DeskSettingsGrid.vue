@@ -59,7 +59,6 @@
                       :lookup="requiredLookup(setting)"
                       :seed="lookupSeed"
                       :multiple="setting.editor === 'chips'"
-                      :blank="clearable(setting)"
                       :selected="setting.editor === 'chips' ? chipsOf(setting) : []"
                       v-bind="lookupMenu(setting)"
                       @pick="onPick(setting, $event)"
@@ -305,11 +304,6 @@ function objectLabel(raw: unknown, key: string): string {
   if (typeof label === 'string') return label;
   if (typeof label === 'number') return String(label);
   return '';
-}
-
-/** An optional single pick (not required, not read only): its list starts with "---" and Delete empties it. */
-function clearable(setting: DeskSetting): boolean {
-  return setting.editor === 'lookup' && !setting.required && !setting.readonly;
 }
 
 function requiredLookup(setting: DeskSetting): DeskLookupConfig {
@@ -680,11 +674,6 @@ function onKey(event: KeyboardEvent): void {
         claimDeskKey(event);
         event.preventDefault();
         changed(setting.key, []);
-      } else if (setting && clearable(setting) && props.read(setting.key) != null) {
-        // An optional pick is cleared the way chips are: Delete on its cell (or "---" in its list).
-        claimDeskKey(event);
-        event.preventDefault();
-        changed(setting.key, null);
       }
       return;
     }
