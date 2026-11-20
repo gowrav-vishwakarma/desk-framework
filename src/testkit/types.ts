@@ -19,6 +19,7 @@ export interface DeskLocator {
   filter(options: { hasText?: string | RegExp }): DeskLocator;
   first(): DeskLocator;
   click(options?: { timeout?: number }): Promise<void>;
+  hover(options?: { timeout?: number }): Promise<void>;
   count(): Promise<number>;
   isVisible(options?: { timeout?: number }): Promise<boolean>;
   waitFor(options?: { state?: 'attached' | 'detached' | 'visible' | 'hidden'; timeout?: number }): Promise<void>;
