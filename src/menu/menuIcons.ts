@@ -13,6 +13,8 @@ export const DESK_MENU_ICONS = {
   star: 'M8 2.2l1.75 3.6 3.95.55-2.85 2.8.7 3.95L8 11.25 4.45 13.1l.7-3.95L2.3 6.35l3.95-.55z',
   /** A shield with a tick: a report that ships with Ankpal. */
   system: 'M8 1.6 3.1 3.5v3.9c0 2.9 2.05 4.85 4.9 6 2.85-1.15 4.9-3.1 4.9-6V3.5zM6.05 7.7l1.35 1.35L10.05 6.25',
+  /** Angle brackets: a page made in code (a built-in report, not one from a designer). */
+  code: 'M5.25 4.5 1.75 8l3.5 3.5M10.75 4.5 14.25 8l-3.5 3.5M9.25 3 6.75 13',
   /** A person: a report saved for this company. */
   company: 'M8 2.15a1.9 1.9 0 1 0 0 3.8 1.9 1.9 0 0 0 0-3.8M3.35 13.85c.7-2.6 2.35-3.85 4.65-3.85s3.95 1.25 4.65 3.85',
   /** A padlock: not permitted for this user. */
