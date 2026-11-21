@@ -161,7 +161,7 @@ export { deskSavedFilter, freezeDeskFilter, thawDeskFilter, sameDeskFilter, type
 export { default as DeskFilterSavedFields } from './filter/DeskFilterSavedFields.vue';
 
 // Also used by the reference app; exported so a host gets every feature from here.
-export { deskDecimals, formatDeskDecimal, formatDeskNumber } from './currency/money';
+export { deskDecimals, formatDeskDecimal, formatDeskNumber, roundDeskDecimal } from './currency/money';
 export type { DeskMoneyFrom } from './currency/money';
 export { datePrefs } from './date/datePrefs';
 export { deskMonthNumber } from './date/deskDate';

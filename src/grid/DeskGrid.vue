@@ -356,7 +356,7 @@ import DeskGridRowActions from './DeskGridRowActions.vue';
 import DeskGridLayoutMenu from './layout/DeskGridLayoutMenu.vue';
 import type { DeskGridLayoutCommand, DeskGridLayoutMenuState } from './layout/types';
 import { isDeskDialogTarget, type DeskBackDialog, type DeskCellTag, type DeskColumn, type DeskColumnTextLayout, type DeskCursor, type DeskGridApi, type DeskGridMode, type DeskGridOption, type DeskGridRow, type DeskGridSortAction, type DeskLookupConfig, type DeskNextFocus, type DeskRange, type DeskRowAction } from './types';
-import { afterBlankMove, cellOpensOnEnter, cellText, columnOptions, currencyCaption, editorText, isReadonly, optionLabel, parseEditorValue, resolveColumnLookup, summaryValue, asNumber } from './display';
+import { afterBlankMove, cellOpensOnEnter, cellText, columnOptions, currencyCaption, editorText, isReadonly, optionLabel, parseEditorValue, resolveColumnLookup, summaryValue, asNumber, typedCellValue } from './display';
 import { isDeskBlankHit } from '../form/blank';
 import { lookupField } from '../form/lookupField';
 import { registerOpenEditor } from '../form/openEditors';
@@ -1936,9 +1936,11 @@ function startEdit(seed?: string): void {
   void nextTick(() => placeSquare());
 }
 
-function writeCell(rowIndex: number, column: DeskColumn, value: unknown): void {
+function writeCell(rowIndex: number, column: DeskColumn, typed: unknown): void {
   const row = rowAt(rowIndex);
   if (!row || isReadonly(column, row)) return;
+  // A number column with `decimals` keeps what is typed at its places (typedCellValue).
+  const value = typedCellValue(column, typed);
   if (column.commit) {
     const record = value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : null;
     column.commit(row, typeof value === 'string' ? value : '', record);

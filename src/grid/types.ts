@@ -284,8 +284,9 @@ export interface DeskColumn<T extends Record<string, unknown> = Record<string, u
   /** Which amount is on top, symbols, and the second line for a currency column. See `DeskMoneyView`. */
   moneyView?: DeskMoneyView;
   /**
-   * Decimal places for a number column: `qty`, `money`, or a count. The cell pads to it and keeps
-   * extra saved digits. Without it a number shows as stored. Currency columns use `money`.
+   * Decimal places for a number column: `qty`, `money`, or a count. The cell pads to it; a typed (or pasted) value is
+   * kept at it (`typedCellValue`: 1.23456 with 3 places is 1.235); a stored value with more digits still shows them.
+   * Without it a number shows and is kept as typed. Currency columns use `money`.
    */
   decimals?: DeskDecimalKind;
   /**

@@ -1,5 +1,5 @@
 import type { DeskColumn, DeskGridRow, DeskLookupConfig, DeskSelectOption, DeskSummary } from './types';
-import { currencyLines, formatDeskNumber } from '../currency/money';
+import { currencyLines, formatDeskNumber, placesFor, roundDeskDecimal } from '../currency/money';
 import { formatDeskDate, parseDeskDate } from '../date/deskDate';
 import { dateParseOptions, datePrefs, ensureDatePrefs } from '../date/datePrefs';
 import { blocksText } from './layout/compile';
@@ -136,3 +136,13 @@ export function parseEditorValue(kind: string | undefined, text: string): unknow
 }
 
 export { currencyCaption } from '../currency/money';
+
+/**
+ * What a typed value is kept as in its column: a number column with `decimals` keeps it at its places (the company's
+ * quantity / rate places), so the screen never holds digits that will not be saved (Ankpal decision 16: 1.23456 typed
+ * with 3 places is 1.235). Anything else as it is.
+ */
+export function typedCellValue(column: Pick<DeskColumn, 'decimals'>, value: unknown): unknown {
+  if (column.decimals === undefined || typeof value !== 'number' || !Number.isFinite(value)) return value;
+  return roundDeskDecimal(value, placesFor(column.decimals));
+}

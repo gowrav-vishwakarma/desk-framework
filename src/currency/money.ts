@@ -33,6 +33,15 @@ export function placesFor(kind: DeskDecimalKind): number {
   return deskDecimals()[kind];
 }
 
+/**
+ * A typed number at `places`, half away from zero, float-safe (2.005 → 2.01; a plain `Math.round(n * 100)` gives 2.00 on
+ * the float 200.49999…).
+ */
+export function roundDeskDecimal(value: number, places: number): number {
+  const f = 10 ** clampPlaces(places, 2);
+  return (Math.sign(value) * Math.round(Number((Math.abs(value) * f).toPrecision(15)))) / f;
+}
+
 const formatters = new Map<string, Intl.NumberFormat>();
 
 /**
