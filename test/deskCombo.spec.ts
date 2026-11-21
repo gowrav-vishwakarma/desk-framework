@@ -67,7 +67,8 @@ describe('desk select', () => {
     expect(document.querySelector('.desk-suggest .hit.active')?.textContent).toBe('Inactive');
 
     await input.trigger('keydown', { key: 'Enter' });
-    expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual(['inactive']);
+    // Unchanged: nothing is emitted, or the same value (before the fix: 'active', the first option).
+    expect(wrapper.emitted('update:modelValue')?.at(-1) ?? ['inactive']).toEqual(['inactive']);
   });
 
   it('a grid dropdown confirms the highlighted row and moves on the same Enter', async () => {
