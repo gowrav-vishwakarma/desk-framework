@@ -17,6 +17,25 @@ export function splitPolicyFor(target: number, policy: DeskSplitPolicy): DeskSpl
   return target > 0 ? policy : 'follow';
 }
 
+/**
+ * The row Enter adds to a split grid. It is the page's fresh row (`blank(remaining)`: defaults only), never a copy
+ * of a row above, so a person starts the next row empty. Under `match` it holds the quantity still to assign; under
+ * `follow` and `confirm` its quantity is empty, so Enter on that empty quantity (the leave cell) ends the grid.
+ * Carrying a row's values forward is a filler's job (`fillRemaining`, `distributeEqually`), never a new row's.
+ */
+export function splitNewRow<T extends DeskSplitRow>(
+  rows: readonly T[],
+  target: number,
+  policy: DeskSplitPolicy,
+  blank: (remaining: number) => T,
+): T {
+  const remaining = policy === 'match' ? Math.max(0, target - splitEntered(rows)) : 0;
+  const row = blank(remaining);
+  if (rows.includes(row)) throw new Error('A split grid\'s new row must be a new object, not a row it already holds.');
+  if (policy !== 'match') (row as Record<string, unknown>).quantity = null;
+  return row;
+}
+
 /** Replaces the rows. The page decides what a filler means (remaining, equal chunks, FIFO later). */
 export interface DeskSplitFiller<T extends DeskSplitRow> {
   id: string;

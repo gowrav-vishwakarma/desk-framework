@@ -202,7 +202,7 @@ export { default as PivotDesigner } from './pivot/PivotDesigner.vue';
 export { buildPivotCube } from './pivot/pivotCube';
 export type { PivotAggregate, PivotField, PivotLayout } from './pivot/pivotTypes';
 export { newCodeRow } from './split/codes';
-export { distributeEqually, fillRemaining, splitPolicyFor } from './split/math';
+export { distributeEqually, fillRemaining, splitNewRow, splitPolicyFor } from './split/math';
 export { createDeskToggles } from './storage/deskToggles';
 export { DESK_THEMES, applyDeskTheme, deskTheme } from './theme/themes';
 export type { DeskToggle, DeskToggles } from './storage/deskToggles';

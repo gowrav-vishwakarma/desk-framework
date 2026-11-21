@@ -56,7 +56,7 @@ import DeskDialog from '../form/DeskDialog.vue';
 import DeskGrid from '../grid/DeskGrid.vue';
 import type { DeskColumn, DeskGridRow } from '../grid/types';
 import type { DeskHandlerInput } from '../keys/layers';
-import { splitCheck, splitEntered, type DeskSplitFiller, type DeskSplitMode, type DeskSplitPolicy, type DeskSplitRow } from './math';
+import { splitCheck, splitEntered, splitNewRow, type DeskSplitFiller, type DeskSplitMode, type DeskSplitPolicy, type DeskSplitRow } from './math';
 
 const open = defineModel<boolean>('open', { required: true });
 const rows = defineModel<T[]>('rows', { required: true });
@@ -69,8 +69,11 @@ const props = withDefaults(
     mode?: DeskSplitMode;
     /** `match` keeps the target. `follow` and `confirm` let the rows set it. */
     policy?: DeskSplitPolicy;
-    /** Builds a row for the unassigned quantity. `previous` is the last row, when there is one. */
-    blank: (remaining: number, previous: T | undefined) => T;
+    /**
+     * Builds a fresh row (defaults only) for the unassigned quantity. Enter on the last cell adds it: a new row
+     * never copies the row above (`splitNewRow`). Fillers carry values forward on their own.
+     */
+    blank: (remaining: number) => T;
     fillers?: DeskSplitFiller<T>[];
     /** Extra rejection on top of the quantity check. Return a message, or null when the rows are fine. */
     check?: (rows: T[]) => string | null;
@@ -163,13 +166,7 @@ function keptRows(): T[] {
 }
 
 function newRow(): DeskGridRow {
-  const previous = rows.value[rows.value.length - 1];
-  const remaining = props.policy === 'match'
-    ? Math.max(0, props.target - rows.value.reduce((sum, row) => sum + (Number(row.quantity) || 0), 0))
-    : 0;
-  const row = props.blank(remaining, previous) as unknown as DeskGridRow;
-  if (props.policy !== 'match') row.quantity = null;
-  return row;
+  return splitNewRow(rows.value, props.target, props.policy, props.blank) as unknown as DeskGridRow;
 }
 
 function runFiller(filler: DeskSplitFiller<T>): void {
