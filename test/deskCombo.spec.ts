@@ -57,6 +57,19 @@ describe('desk select', () => {
     expect(wrapper.emitted('advance')).toHaveLength(1);
   });
 
+  it('typing the value it already holds and Enter keeps that value (not the first option)', async () => {
+    const wrapper = mountStatus('inactive');
+    const input = wrapper.get('input');
+
+    await input.trigger('focus');
+    await input.setValue('');
+    await input.setValue('Inactive');
+    expect(document.querySelector('.desk-suggest .hit.active')?.textContent).toBe('Inactive');
+
+    await input.trigger('keydown', { key: 'Enter' });
+    expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual(['inactive']);
+  });
+
   it('a grid dropdown confirms the highlighted row and moves on the same Enter', async () => {
     const wrapper = mount(DeskCombo, {
       props: {

@@ -257,7 +257,10 @@ function onType(event: Event): void {
   query.value = typed;
   picking.value = query.value !== committedLabel();
   open.value = true;
-  active.value = 0;
+  // Typing the value it already holds shows the whole list again: the highlight stays on that value (as on focus),
+  // so Enter keeps it instead of taking the first option.
+  const current = picking.value ? -1 : choices.value.findIndex((option) => sameChoice(option, model.value));
+  active.value = current >= 0 ? current : 0;
 }
 
 function choose(option: DeskSelectOption): void {
