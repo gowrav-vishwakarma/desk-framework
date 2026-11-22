@@ -110,4 +110,29 @@ describe('split grid new row', () => {
     expect(rows.value).toHaveLength(2);
     wrapper.unmount();
   });
+
+  it('fixedRows: Enter never adds a row; it moves on to OK', async () => {
+    vi.stubGlobal('ResizeObserver', ResizeObserverStub);
+    const rows = ref<Row[]>([{ key: 'only', quantity: 2, uom: 'PCS', batchNumber: 'B-1' }]);
+    const Harness = defineComponent({
+      components: { DeskSplitDialog },
+      setup() {
+        const open = ref(true);
+        return { open, rows, columns: [{ id: 'quantity', header: 'Qty', width: 60, editor: 'number' }, { id: 'batchNumber', header: 'Batch', width: 100 }], blank: carrying, rowKey: (row: Record<string, unknown>) => String(row.key) };
+      },
+      template: `<DeskSplitDialog v-model:open="open" v-model:rows="rows" title="Parameters" :target="4" policy="follow" fixed-rows
+        :columns="columns" :blank="blank" :row-key="rowKey" />`,
+    });
+    const wrapper = mount(Harness, { attachTo: document.body });
+    await flushPromises();
+    const grid = document.body.querySelector('.desk-split-grid .table-content');
+    if (!(grid instanceof HTMLElement)) throw new Error('grid missing');
+    for (let i = 0; i < 3; i += 1) {
+      grid.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      await flushPromises();
+      await nextTick();
+    }
+    expect(rows.value).toHaveLength(1);
+    wrapper.unmount();
+  });
 });

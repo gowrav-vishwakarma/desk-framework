@@ -44,6 +44,28 @@ export function codesInRange(prefix: string, from: number, to: number, pad: numb
   return codes;
 }
 
+
+/**
+ * Codes written short: a run of consecutive numbers with the same prefix and width reads as its first code and how many
+ * follow, so SN0222, SN0223, SN0224, SN0225, SN0300 reads `SN0222+3, SN0300`. Codes are sorted first; a code without
+ * trailing digits stands alone.
+ */
+export function compactCodes(codes: readonly string[]): string {
+  const parts = [...new Set(codes)].map((code) => {
+    const match = /^(.*?)(\d+)$/.exec(code);
+    return match ? { code, prefix: match[1] ?? '', width: match[2]!.length, value: Number(match[2]) } : { code, prefix: code, width: -1, value: 0 };
+  });
+  parts.sort((a, b) => (a.prefix === b.prefix ? (a.width === b.width ? a.value - b.value : a.width - b.width) : a.prefix < b.prefix ? -1 : 1));
+  const out: string[] = [];
+  for (let i = 0; i < parts.length; ) {
+    const first = parts[i]!;
+    let j = i;
+    while (first.width >= 0 && j + 1 < parts.length && parts[j + 1]!.prefix === first.prefix && parts[j + 1]!.width === first.width && parts[j + 1]!.value === parts[j]!.value + 1) j += 1;
+    out.push(j > i ? `${first.code}+${j - i}` : first.code);
+    i = j + 1;
+  }
+  return out.join(', ');
+}
 export interface CodeMerge {
   rows: DeskCodeRow[];
   duplicates: string[];

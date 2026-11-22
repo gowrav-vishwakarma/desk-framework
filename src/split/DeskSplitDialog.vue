@@ -83,8 +83,10 @@ const props = withDefaults(
      */
     beforeDone?: (rows: T[]) => Promise<string | null>;
     rowKey?: (row: DeskGridRow) => string;
+    /** The rows given are all there is: Enter never adds one (e.g. one fixed source per line, only its details edited). */
+    fixedRows?: boolean;
   }>(),
-  { mode: 'atMost', policy: 'match', fillers: () => [] },
+  { mode: 'atMost', policy: 'match', fillers: () => [], fixedRows: false },
 );
 
 const emit = defineEmits<{
@@ -142,6 +144,7 @@ function quantityMatched(): boolean {
 }
 
 function blockAnotherRow(): boolean {
+  if (props.fixedRows) return true;
   return props.policy === 'match' && quantityMatched();
 }
 
