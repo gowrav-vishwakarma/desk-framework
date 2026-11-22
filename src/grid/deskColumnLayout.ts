@@ -47,7 +47,10 @@ export function canReorderColumn(column: DeskColumn | undefined): boolean {
   return !columnPin(column);
 }
 
-/** Keep saved middle order, drop removed ids, append new middle ids in definition order. */
+/**
+ * Keep saved middle order, drop removed ids. A middle id the saved order does not know (a column that appeared since)
+ * goes where its definition puts it: before the nearest column defined after it that the order holds, else at the end.
+ */
 export function mergeMiddleOrder(columns: readonly DeskColumn[], saved: readonly string[] | null | undefined): string[] {
   const middle = middleColumnIds(columns);
   if (!middle.length) return [];
@@ -56,9 +59,14 @@ export function mergeMiddleOrder(columns: readonly DeskColumn[], saved: readonly
   for (const id of saved ?? []) {
     if (middleSet.has(id) && !ordered.includes(id)) ordered.push(id);
   }
-  for (const id of middle) {
-    if (!ordered.includes(id)) ordered.push(id);
-  }
+  const known = new Set(ordered);
+  middle.forEach((id, index) => {
+    if (ordered.includes(id)) return;
+    const next = middle.slice(index + 1).find((after) => known.has(after));
+    const at = next ? ordered.indexOf(next) : -1;
+    if (at < 0) ordered.push(id);
+    else ordered.splice(at, 0, id);
+  });
   return ordered;
 }
 

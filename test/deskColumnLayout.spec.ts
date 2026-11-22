@@ -28,6 +28,10 @@ describe('deskColumnLayout', () => {
     const extended = [...cols, { id: 'e', header: 'E' }];
     expect(mergeMiddleOrder(extended, ['c', 'b'])).toEqual(['c', 'b', 'e']);
     expect(mergeMiddleOrder(cols, ['c', 'x', 'b'])).toEqual(['c', 'b']);
+    // A column that appeared since the order was saved goes before the column defined after it, not at the end.
+    const inserted = [cols[0]!, { id: 'n', header: 'N' }, ...cols.slice(1)];
+    expect(mergeMiddleOrder(inserted, ['c', 'b'])).toEqual(['c', 'n', 'b']);
+    expect(mergeMiddleOrder([cols[0]!, { id: 'n', header: 'N' }, { id: 'm', header: 'M' }, ...cols.slice(1)], ['b', 'c'])).toEqual(['n', 'm', 'b', 'c']);
   });
 
   it('drops widths for removed columns', () => {
