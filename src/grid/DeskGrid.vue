@@ -1950,11 +1950,12 @@ function writeCell(rowIndex: number, column: DeskColumn, typed: unknown): void {
   changed({ row: rowIndex, columnId: column.id, value, record: row });
 }
 
-function commitEdit(advance: boolean, force = false, refocus = true): void {
+/** Whether the edit just committed changed the cell (false when nothing was being edited). */
+function commitEdit(advance: boolean, force = false, refocus = true): boolean {
   if (!editing.value) {
     if (advance) void applyEnter(false, force);
     else if (refocus) focusGrid();
-    return;
+    return false;
   }
   const column = activeColumn.value;
   const row = rowAt(cursor.value.row);
@@ -1968,13 +1969,26 @@ function commitEdit(advance: boolean, force = false, refocus = true): void {
       editing.value = false;
       draft.value = '';
       leaveGrid();
-      return;
+      return changed;
     }
   }
   editing.value = false;
   draft.value = '';
   if (advance) void applyEnter(changed, force);
   else if (refocus) focusGrid();
+  return changed;
+}
+
+/** Open the cell's Enter dialog when its rule asks for one now (Tab off a last cell with a drawer). */
+function openCellEnterDialog(changed: boolean): boolean {
+  const column = activeColumn.value;
+  const row = rowAt(cursor.value.row);
+  if (!column || !row) return false;
+  const decision = resolveCellEnter({ row, rowIndex: cursor.value.row, changed, force: false }, column, props.onNextFocus);
+  if (decision.type !== 'dialog') return false;
+  emit('dialog', { dialog: decision.dialog, row, rowIndex: cursor.value.row, columnId: decision.returnTo ?? column.id });
+  focusGrid();
+  return true;
 }
 
 /** Add or remove one row in a multiple lookup. The list stays open. */
@@ -2082,7 +2096,9 @@ function onEditorTab(back: boolean): void {
   const row = rowAt(cursor.value.row);
   const last = cursor.value.col >= visibleColumns.value.length - 1;
   if (!back && row && last && showDrawer(row, cursor.value.row)) {
-    commitEdit(false, false, false);
+    const changed = commitEdit(false, false, false);
+    // The cell's own dialog comes first (a box its change opens, as Enter opens it); the drawer after it.
+    if (openCellEnterDialog(changed)) return;
     focusDrawer(cursor.value.row, '');
     return;
   }
