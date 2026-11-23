@@ -86,8 +86,10 @@ const props = withDefaults(
     rowKey?: (row: DeskGridRow) => string;
     /** The rows given are all there is: Enter never adds one (e.g. one fixed source per line, only its details edited). */
     fixedRows?: boolean;
+    /** OK with no row kept is an answer ("nothing to add": the page holds the quantity elsewhere, e.g. rows it does not show). */
+    allowEmpty?: boolean;
   }>(),
-  { mode: 'atMost', policy: 'match', fillers: () => [], fixedRows: false },
+  { mode: 'atMost', policy: 'match', fillers: () => [], fixedRows: false, allowEmpty: false },
 );
 
 const emit = defineEmits<{
@@ -183,7 +185,7 @@ function onDialog(payload: { dialog: string; row: DeskGridRow; rowIndex: number;
 
 async function commit(): Promise<void> {
   const saved = keptRows();
-  if (saved.length === 0 || saving.value) return;
+  if ((saved.length === 0 && !props.allowEmpty) || saving.value) return;
   if (props.beforeDone) {
     saving.value = true;
     try {
@@ -206,7 +208,7 @@ async function commit(): Promise<void> {
 function ok(): void {
   if (saving.value || !check.value.ok || extra.value) return;
   const saved = keptRows();
-  if (saved.length === 0) return;
+  if (saved.length === 0 && !props.allowEmpty) return;
   if (props.policy === 'confirm' && Math.abs(splitEntered(saved) - props.target) > 1e-6) {
     confirmMessage.value = `Change item quantity from ${shown(props.target)} to ${shown(splitEntered(saved))}?`;
     confirmOpen.value = true;

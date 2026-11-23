@@ -177,4 +177,29 @@ describe('split grid new row', () => {
     expect(rows.value).toHaveLength(1);
     wrapper.unmount();
   });
+
+  it('OK with every row empty: nothing happens, unless allowEmpty (the page holds the quantity elsewhere), then done with no rows', async () => {
+    vi.stubGlobal('ResizeObserver', ResizeObserverStub);
+    for (const allowEmpty of [false, true]) {
+      const done: Row[][] = [];
+      const rows = ref<Row[]>([{ key: 'empty', quantity: 0, uom: 'PCS' }]);
+      const Harness = defineComponent({
+        components: { DeskSplitDialog },
+        setup() {
+          const open = ref(true);
+          return { open, rows, allowEmpty, onDone: (saved: Row[]) => done.push(saved), columns: [{ id: 'quantity', header: 'Qty', width: 60, editor: 'number' }], blank: fresh, rowKey: (row: Record<string, unknown>) => String(row.key) };
+        },
+        template: `<DeskSplitDialog v-model:open="open" v-model:rows="rows" title="Parameters" :target="0" policy="follow" :allow-empty="allowEmpty"
+          :columns="columns" :blank="blank" :row-key="rowKey" @done="onDone" />`,
+      });
+      const wrapper = mount(Harness, { attachTo: document.body });
+      await flushPromises();
+      const ok = [...document.body.querySelectorAll('[data-desk-field="split-ok"]')].at(-1);
+      if (!(ok instanceof HTMLElement)) throw new Error('OK missing');
+      ok.click();
+      await flushPromises();
+      expect(done, `allowEmpty ${allowEmpty}`).toEqual(allowEmpty ? [[]] : []);
+      wrapper.unmount();
+    }
+  });
 });
