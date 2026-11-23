@@ -19,8 +19,11 @@ export interface DeskChecklistOptions {
   label?: string;
   /** Group id. Defaults to the pref key. Give each checklist in one merged menu its own. */
   groupId?: string;
-  /** The ids checked until the user chooses (default: all). */
-  defaults?: readonly string[];
+  /**
+   * The ids checked until the user chooses (default: all). A function is read each time, so the defaults can follow
+   * something that loads later (a company setting: a party lookup searching aliases where the company keeps them).
+   */
+  defaults?: readonly string[] | (() => readonly string[]);
 }
 
 /**
@@ -45,7 +48,9 @@ export function createDeskChecklist(
 
   function current(): Set<string> {
     void revision.value;
-    return chosen ?? new Set(options.defaults ? ids.filter((id) => options.defaults!.includes(id)) : ids);
+    if (chosen) return chosen;
+    const defaults = typeof options.defaults === 'function' ? options.defaults() : options.defaults;
+    return new Set(defaults ? ids.filter((id) => defaults.includes(id)) : ids);
   }
 
   function apply(fields: Iterable<string>, persist: boolean): void {
