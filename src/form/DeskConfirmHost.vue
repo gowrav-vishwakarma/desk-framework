@@ -7,7 +7,7 @@
     :details="request.details"
     :yes-label="request.okLabel"
     :no-label="request.cancelLabel"
-    v-bind="request.tone ? { tone: request.tone } : {}"
+    v-bind="{ ...(request.tone ? { tone: request.tone } : {}), ...(request.fields ? { fields: request.fields, values: request.values ?? {} } : {}) }"
     @yes="finish(true)"
     @no="finish(false)"
   />

@@ -2,7 +2,7 @@
   <DeskDialog
     name="confirm"
     v-model:open="open"
-    :initial-focus="tone === 'danger' ? 'confirm-no' : 'confirm-yes'"
+    :initial-focus="fields.length ? `confirm-${fields[0]!.id}` : tone === 'danger' ? 'confirm-no' : 'confirm-yes'"
     @close="no"
     @accept="onAccept"
   >
@@ -11,6 +11,17 @@
     <ul v-if="lines.length" class="desk-confirm-details">
       <li v-for="(line, index) in lines" :key="index">{{ line }}</li>
     </ul>
+    <DeskField
+      v-for="(field, index) in fields"
+      :key="field.id"
+      v-model="values[field.id]"
+      :field-id="`confirm-${field.id}`"
+      :label="field.label"
+      :kind="field.kind ?? 'text'"
+      :required="field.required === true"
+      :initial="index === 0"
+    />
+    <p v-if="missing" class="desk-error">{{ missing }}</p>
     <button type="button" data-desk-field="confirm-yes" data-form-save-btn :class="deskActionClass(tone ? { tone } : {})" @click="yes">
       {{ yesLabel }}
     </button>
@@ -19,10 +30,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { deskActionClass } from '../grid/actionClass';
 import type { DeskActionTone } from '../grid/types';
 import DeskDialog from './DeskDialog.vue';
+import DeskField from './DeskField.vue';
+import type { DeskConfirmField } from './confirm';
 
 const open = defineModel<boolean>('open', { required: true });
 const props = withDefaults(
@@ -33,15 +46,22 @@ const props = withDefaults(
     yesLabel?: string;
     noLabel?: string;
     tone?: DeskActionTone;
+    /** Values asked with the question; typed into `values` (the request's own object). */
+    fields?: readonly DeskConfirmField[];
+    values?: Record<string, string>;
   }>(),
-  { details: () => [], yesLabel: 'Yes', noLabel: 'No' },
+  { details: () => [], yesLabel: 'Yes', noLabel: 'No', fields: () => [], values: () => ({}) },
 );
 const emit = defineEmits<{ yes: []; no: [] }>();
 const lines = computed(() => props.details ?? []);
 let answered = false;
+const missing = ref('');
 
 watch(open, (shown) => {
-  if (shown) answered = false;
+  if (shown) {
+    answered = false;
+    missing.value = '';
+  }
 });
 
 function answer(kind: 'yes' | 'no'): void {
@@ -53,6 +73,11 @@ function answer(kind: 'yes' | 'no'): void {
 }
 
 function yes(): void {
+  const empty = props.fields.filter((field) => field.required && !String(props.values[field.id] ?? '').trim());
+  if (empty.length) {
+    missing.value = `${empty.map((field) => field.label).join(', ')}: required`;
+    return;
+  }
   answer('yes');
 }
 

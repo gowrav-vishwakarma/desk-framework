@@ -38,7 +38,7 @@ export { default as DeskSettingsGrid } from './grid/DeskSettingsGrid.vue';
 export { default as DeskConfirmDialog } from './form/DeskConfirmDialog.vue';
 export { default as DeskConfirmHost } from './form/DeskConfirmHost.vue';
 export { default as DeskLeaveDialog } from './form/DeskLeaveDialog.vue';
-export { askDeskConfirm } from './form/confirm';
+export { askDeskConfirm, askDeskInput, type DeskConfirmField } from './form/confirm';
 export { askDeskLeave, confirmDeskDiscard, useDeskDirty } from './form/leaveGuard';
 export { useDeskFormDirty, useDeskFormPart, type DeskFormDirty, type DeskFormDirtyOptions, type DeskFormPart } from './form/formDirty';
 export { type DeskDraft, type DeskDraftOptions } from './form/draft';

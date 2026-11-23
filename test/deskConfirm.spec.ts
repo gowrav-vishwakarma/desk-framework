@@ -66,3 +66,29 @@ describe('askDeskConfirm', () => {
     await expect(first).resolves.toBe(true);
   });
 });
+
+describe('askDeskInput', () => {
+  it('asks its fields with the question: OK with a required one empty stays open and says so; typed, it resolves the values; Cancel resolves null', async () => {
+    const { askDeskInput } = await import('../src/form/confirm');
+    const host = mount(DeskConfirmHost, { attachTo: document.body });
+    const asked = askDeskInput({ title: 'Cancel Voucher', message: 'Cancellation reason is required', fields: [{ id: 'cancelReason', label: 'Cancellation reason', kind: 'textarea', required: true }], okLabel: 'Cancel Voucher' });
+    await flushPromises();
+    const box = document.body.querySelector('textarea');
+    if (!(box instanceof HTMLTextAreaElement)) throw new Error('no reason box');
+    field('confirm-yes').click();
+    await flushPromises();
+    expect(document.body.textContent).toContain('Cancellation reason: required');
+    expect(deskConfirmAsked.value).not.toBeNull();
+    box.value = 'Wrong batch';
+    box.dispatchEvent(new Event('input'));
+    await flushPromises();
+    field('confirm-yes').click();
+    await expect(asked).resolves.toEqual({ cancelReason: 'Wrong batch' });
+
+    const dropped = askDeskInput({ title: 'Cancel Voucher', message: 'Why?', fields: [{ id: 'cancelReason', label: 'Reason' }] });
+    await flushPromises();
+    field('confirm-no').click();
+    await expect(dropped).resolves.toBeNull();
+    host.unmount();
+  });
+});
