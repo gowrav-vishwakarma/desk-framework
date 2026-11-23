@@ -7,7 +7,7 @@
         <span>Target {{ shown(target) }}</span>
         <span>Entered {{ shown(check.entered) }}</span>
         <span :class="{ short: !check.ok || Boolean(failure || extra) || check.remaining > 0 }">{{ failure || extra || check.message || 'Assigned' }}</span>
-        <button v-for="filler in fillers" :key="filler.id" type="button" @click="runFiller(filler)">{{ filler.label }}</button>
+        <button v-for="filler in fillers" :key="filler.id" type="button" :data-desk-field="`split-fill-${filler.id}`" @click="runFiller(filler)">{{ filler.label }}</button>
       </div>
       <div class="desk-split-grid">
         <DeskGrid

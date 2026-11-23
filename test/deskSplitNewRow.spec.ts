@@ -202,4 +202,31 @@ describe('split grid new row', () => {
       wrapper.unmount();
     }
   });
+  it('each filler button carries its id (split-fill-<id>), so a test or a recording clicks it by name', async () => {
+    vi.stubGlobal('ResizeObserver', ResizeObserverStub);
+    const rows = ref<Row[]>([{ key: 'one', quantity: 4, uom: 'PCS' }]);
+    const Harness = defineComponent({
+      components: { DeskSplitDialog },
+      setup() {
+        return {
+          open: ref(true),
+          rows,
+          columns: [{ id: 'quantity', header: 'Qty', width: 60, editor: 'number' }],
+          blank: carrying,
+          rowKey: (row: Record<string, unknown>) => String(row.key),
+          fillers: [{ id: 'remaining', label: 'Fill remaining', fill: (qty: number, current: Row[]) => [...current, fresh(qty - 4)] }],
+        };
+      },
+      template: `<DeskSplitDialog v-model:open="open" v-model:rows="rows" title="Parameters" :target="10" :columns="columns"
+        :blank="blank" :row-key="rowKey" :fillers="fillers" />`,
+    });
+    const wrapper = mount(Harness, { attachTo: document.body });
+    await flushPromises();
+    const button = document.body.querySelector<HTMLButtonElement>('[data-desk-field="split-fill-remaining"]');
+    expect(button?.textContent?.trim()).toBe('Fill remaining');
+    button!.click();
+    await flushPromises();
+    expect(rows.value.map((row) => row.quantity)).toEqual([4, 6]);
+    wrapper.unmount();
+  });
 });
