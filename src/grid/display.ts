@@ -32,6 +32,21 @@ export function cellText(column: DeskColumn, row: DeskGridRow): string {
   return formatRawValue(raw);
 }
 
+/**
+ * A totals or foot line's value under a column, shown as a body cell of that column shows it: the column's own format,
+ * a layout column's blocks (its catalog field's places, money or named formatter), its money or quantity places, its
+ * date format. A report's server totals came out raw (`42500.000000000000`) because a layout column has no `format`, only
+ * blocks. Blocks that show nothing on the line (they read other fields) leave the raw value.
+ */
+export function footText(column: DeskColumn, line: DeskGridRow): string {
+  const value = line[column.id];
+  if (value === undefined || value === null || value === '') return '';
+  if (column.format) return column.format(value, line);
+  if (column.blocks) return blocksText(column.blocks(line)) || formatRawValue(value);
+  if (column.relation) return formatRawValue(value);
+  return cellText(column, line);
+}
+
 /** Value an editor should open with. A formatted face, such as an applied rate, stays on screen only. */
 export function editorText(column: DeskColumn, row: DeskGridRow): string {
   if (!column.editor) return cellText(column, row);

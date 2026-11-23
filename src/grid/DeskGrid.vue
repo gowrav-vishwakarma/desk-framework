@@ -356,7 +356,7 @@ import DeskGridRowActions from './DeskGridRowActions.vue';
 import DeskGridLayoutMenu from './layout/DeskGridLayoutMenu.vue';
 import type { DeskGridLayoutCommand, DeskGridLayoutMenuState } from './layout/types';
 import { isDeskDialogTarget, type DeskBackDialog, type DeskCellTag, type DeskColumn, type DeskColumnTextLayout, type DeskCursor, type DeskGridApi, type DeskGridMode, type DeskGridOption, type DeskGridRow, type DeskGridSortAction, type DeskLookupConfig, type DeskNextFocus, type DeskRange, type DeskRowAction } from './types';
-import { afterBlankMove, cellOpensOnEnter, cellText, columnOptions, currencyCaption, editorText, isReadonly, optionLabel, parseEditorValue, resolveColumnLookup, summaryValue, asNumber, typedCellValue } from './display';
+import { afterBlankMove, cellOpensOnEnter, cellText, columnOptions, currencyCaption, editorText, footText, isReadonly, optionLabel, parseEditorValue, resolveColumnLookup, summaryValue, asNumber, typedCellValue } from './display';
 import { isDeskBlankHit } from '../form/blank';
 import { lookupField } from '../form/lookupField';
 import { registerOpenEditor } from '../form/openEditors';
@@ -913,8 +913,7 @@ const totalsText = computed((): Map<string, string> | null => {
   if (!totals) return null;
   const out = new Map<string, string>();
   visibleColumns.value.forEach((column, index) => {
-    const value = totals[column.id];
-    const text = value === undefined || value === null ? '' : column.format ? column.format(value, totals as DeskGridRow) : String(value as string | number);
+    const text = footText(column, totals as DeskGridRow);
     out.set(column.id, !text && index === 0 ? (props.totalsLabel ?? '') : text);
   });
   return out;
@@ -925,8 +924,7 @@ const footTexts = computed((): Map<string, string>[] =>
   (props.footLines ?? []).map((line) => {
     const out = new Map<string, string>();
     visibleColumns.value.forEach((column, index) => {
-      const value = line[column.id];
-      const text = value === undefined || value === null ? '' : column.format ? column.format(value, line as DeskGridRow) : String(value as string | number);
+      const text = footText(column, line as DeskGridRow);
       const label = typeof line.__label === 'string' ? line.__label : '';
       out.set(column.id, !text && index === 0 ? label : text);
     });
