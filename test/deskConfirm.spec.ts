@@ -85,6 +85,13 @@ describe('askDeskInput', () => {
     field('confirm-yes').click();
     await expect(asked).resolves.toEqual({ cancelReason: 'Wrong batch' });
 
+    // A choice is drawn by DeskField too (its options): left empty it stays null.
+    const chosen = askDeskInput({ title: 'Close', message: 'How?', fields: [{ id: 'mode', label: 'Mode', kind: 'select', options: [{ value: 'full', label: 'Full' }] }, { id: 'on', label: 'On', kind: 'date' }] });
+    await flushPromises();
+    expect(document.body.querySelector('[data-desk-field="confirm-mode"], #confirm-mode')).not.toBeNull();
+    field('confirm-yes').click();
+    await expect(chosen).resolves.toEqual({ mode: null, on: null });
+
     const dropped = askDeskInput({ title: 'Cancel Voucher', message: 'Why?', fields: [{ id: 'cancelReason', label: 'Reason' }] });
     await flushPromises();
     field('confirm-no').click();

@@ -1,13 +1,18 @@
 import { ref, type Ref } from 'vue';
 import type { DeskActionTone } from '../grid/types';
+import type { DeskSelectOption } from '../grid/types';
 
-/** A value the question asks for (an action's input: a cancellation reason). */
+/** A value the question asks for (an action's input: a cancellation reason, a date, a choice), drawn by `DeskField`. */
 export interface DeskConfirmField {
   id: string;
   label: string;
-  kind?: 'text' | 'textarea' | 'date';
+  kind?: 'text' | 'textarea' | 'date' | 'number' | 'select';
+  /** A select's choices (Yes / No, a status, …). */
+  options?: readonly DeskSelectOption[];
   required?: boolean;
 }
+
+export type DeskConfirmValues = Record<string, string | number | null>;
 
 /** The question on screen, if any. `DeskConfirmHost` shows it and calls `answerDeskConfirm`. */
 export interface DeskConfirmRequest {
@@ -19,7 +24,7 @@ export interface DeskConfirmRequest {
   tone?: DeskActionTone;
   /** Values asked with the question, typed into `values` (`askDeskInput`). */
   fields?: readonly DeskConfirmField[];
-  values?: Record<string, string>;
+  values?: DeskConfirmValues;
 }
 
 export const deskConfirmAsked: Ref<DeskConfirmRequest | null> = ref(null);
@@ -70,8 +75,8 @@ export async function askDeskInput(request: {
   okLabel?: string;
   cancelLabel?: string;
   tone?: DeskActionTone;
-}): Promise<Record<string, string> | null> {
-  const values: Record<string, string> = Object.fromEntries(request.fields.map((field) => [field.id, '']));
+}): Promise<DeskConfirmValues | null> {
+  const values: DeskConfirmValues = Object.fromEntries(request.fields.map((field) => [field.id, null]));
   const asked = askDeskConfirm(request);
   if (deskConfirmAsked.value) deskConfirmAsked.value = { ...deskConfirmAsked.value, fields: request.fields, values };
   const ok = await asked;
