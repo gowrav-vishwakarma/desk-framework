@@ -453,6 +453,12 @@ const props = withDefaults(
     exitOnBlank?: boolean;
     /** When this returns true, Enter on the last cell leaves the grid instead of adding a row. */
     blockNewRow?: () => boolean;
+    /**
+     * Enter on the last cell of a row whose gate number is 0 or blank leaves the grid (an item grid: nothing entered on
+     * that row). Off for a split grid, where a row with quantity 0 still holds its other cells (a lot picked, then
+     * cleared): there Enter only leaves from an empty quantity cell.
+     */
+    zeroGateLeaves?: boolean;
     /** Where to put focus when Enter leaves the grid. Return true when it took focus. */
     exitTo?: () => boolean;
     /**
@@ -590,6 +596,7 @@ const props = withDefaults(
     hint: 'Enter moves right · F2 edit · Ctrl+C/V · Ctrl+D fill',
     exitWhenBlank: '',
     exitOnBlank: true,
+    zeroGateLeaves: true,
     enterJump: false,
     footEntry: false,
     ctrlArrows: true,
@@ -2373,7 +2380,7 @@ function keyState() {
     pageSize: props.pageSize && props.pageSize > 0 ? props.pageSize : 12,
     blankOnNewRow: props.exitOnBlank && gateColumnEmpty(),
     blockNewRow: props.blockNewRow?.() === true,
-    numberGateEmpty: props.exitOnBlank && numberGateEmpty(),
+    numberGateEmpty: props.exitOnBlank && props.zeroGateLeaves !== false && numberGateEmpty(),
     onGate: activeColumn.value?.id === gateColumnId(),
     newRowAt: props.newRowAt,
     tabFlow: props.tabFlow,

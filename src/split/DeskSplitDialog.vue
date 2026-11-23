@@ -20,6 +20,7 @@
           :min-rows="1"
           :exit-on-blank="policy !== 'match'"
           :exit-when-blank="policy === 'match' ? '' : 'quantity'"
+          :zero-gate-leaves="false"
           :block-new-row="blockAnotherRow"
           :exit-to="focusOk"
           :new-row="newRow"
