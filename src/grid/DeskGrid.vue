@@ -1568,7 +1568,9 @@ function focusGrid(): void {
   const editorHasFocus =
     (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) &&
     active !== scroller.value &&
-    Boolean(scroller.value?.contains(active));
+    Boolean(scroller.value?.contains(active)) &&
+    // A filter row box is not a cell editor: a click on a cell after filtering moves typing to the cells.
+    !active.closest('td.column-filter');
   // The lookup input is already focused. Focusing the grid would close its list.
   if (editorHasFocus) return;
   scroller.value?.focus();
