@@ -7,8 +7,22 @@ export const deskLocators = {
   node: (path: string): string => `[data-desk-path="${path}"], [data-desk-path$="/${path}"]`,
   /** Every node of one kind: `deskLocators.kind('dialog')`. */
   kind: (kind: string): string => `[data-desk-node^="${kind}:"]`,
+  /**
+   * Elements inside a node: `within('settings:inventory', '[data-setting="x"]')`. `node()` is a selector list (full or
+   * short path), so a plain `${node(path)} inner` would match the node itself through the list's first half.
+   */
+  within: (path: string, inner: string): string => `:is(${deskLocators.node(path)}) :is(${inner})`,
   /** The control inside a field node: the input, select or button the user types into. */
-  control: (path: string): string => `${deskLocators.node(path)} [data-desk-field], ${deskLocators.node(path)} input, ${deskLocators.node(path)} textarea`,
+  control: (path: string): string => deskLocators.within(path, '[data-desk-field], input, textarea'),
+  /** One setting of a settings grid: its label and value cells (ring both as one row). */
+  settingRow: (settings: string, key: string): string =>
+    deskLocators.within(settings, `[data-setting="${key}"], [data-setting-label="${key}"]`),
+  /** One cell of one grid, by row index and column id. */
+  gridCellIn: (grid: string, row: number, column: string): string => deskLocators.within(grid, deskLocators.gridCell(row, column)),
+  /** Every cell of one body row of a grid (row number cell aside): together they are the row as drawn. */
+  gridRowCells: (grid: string, row: number): string => deskLocators.within(grid, `td[data-cell^="${row}-"]`),
+  /** A footer line of a grid (a total, the grand total) by its id: its label and amount cells. */
+  footLine: (grid: string, id: string): string => deskLocators.within(grid, `[data-foot-line="${id}"]`),
   /** A layer such as a dialog drawn on top. */
   topLayer: '[data-desk-layer]:last-of-type',
   /** A tab button and its pane. */

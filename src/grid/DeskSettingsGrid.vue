@@ -29,6 +29,7 @@
                   <td
                     class="desk-settings-label"
                     :colspan="row.cells[1] ? 1 : 2"
+                    :data-setting-label="setting.key"
                     :title="setting.hint ?? ''"
                   >
                     {{ setting.label }}<span v-if="setting.required" class="desk-req"> *</span>
