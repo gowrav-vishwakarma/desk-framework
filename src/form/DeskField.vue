@@ -32,6 +32,7 @@
       :lookup="lookup"
       v-bind="{
         ...(menu ? { menu } : {}),
+        ...(addButton ? { addButton: true } : {}),
         ...(initial ? { initial: true } : {}),
         ...(hint ? { placeholder: hint } : {}),
         ...(hoverTitle ? { title: hoverTitle } : {}),
@@ -212,6 +213,8 @@ const props = withDefaults(defineProps<{
   maxlength?: number | string;
   /** Runs on every input; what it returns is shown and stored. Typed kinds (text, number, password, textarea). */
   formatter?: (value: string) => string;
+  /** Lookup kind: show "+" beside the box when the lookup has an `editor` (off by default). */
+  addButton?: boolean;
   /** Number kind: store a Number, or null when empty, instead of the typed text. Text that is not a number stays text. */
   numeric?: boolean;
 }>(), { labelStyle: 'side' });

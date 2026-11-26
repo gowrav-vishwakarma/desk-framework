@@ -1,5 +1,5 @@
 <template>
-  <div class="desk-lookup" :class="{ 'desk-combo-grid': variant === 'grid' }" @contextmenu="onMenu">
+  <div class="desk-lookup" :class="{ 'desk-combo-grid': variant === 'grid', 'has-add': showAdd }" @contextmenu="onMenu">
     <input
       ref="box"
       v-bind="inputAttrs"
@@ -12,6 +12,17 @@
       @keydown="onKey"
     />
     <DeskMark kind="search" :field="fieldId" @press="onMark" />
+    <button
+      v-if="showAdd"
+      type="button"
+      class="desk-field-add-btn"
+      tabindex="-1"
+      :title="addTitle"
+      :aria-label="addTitle"
+      :data-desk-action="`${fieldId || 'lookup'}-add-new`"
+      @mousedown.prevent
+      @click="openEditor('new')"
+    >+</button>
     <Teleport to="body">
     <div
       v-if="open"
@@ -88,7 +99,7 @@ import { deskHost } from '../host';
 import type { DeskLookupConfig } from '../grid/types';
 import { claimDeskKey, isDeskNavKey } from '../focus/useDeskFocus';
 import { keyInputOf, toCombo } from '../keys/combo';
-import { deskActionsFor } from '../keys/deskKeymap';
+import { deskActionsFor, deskKeyLabel } from '../keys/deskKeymap';
 import DeskContextMenu from '../menu/DeskContextMenu.vue';
 import { placePopup } from '../menu/placePopup';
 import { mergeDeskMenus, useDeskContextMenu, type DeskFieldMenu } from '../menu/fieldMenu';
@@ -122,8 +133,13 @@ const props = withDefaults(
      */
     multiple?: boolean;
     selected?: readonly Record<string, unknown>[];
+    /**
+     * Shows "+" beside the box when the lookup has an `editor`: the mouse way to its New key, the same editor
+     * and pick. Off by default; a host turns it on per field.
+     */
+    addButton?: boolean;
   }>(),
-  { variant: 'form', selectAll: true, placeholder: '', title: '', blank: false, multiple: false, selected: () => [] },
+  { variant: 'form', selectAll: true, placeholder: '', title: '', blank: false, multiple: false, selected: () => [], addButton: false },
 );
 const emit = defineEmits<{
   advance: [via: 'enter' | 'tab'];
@@ -529,6 +545,12 @@ function onMenu(event: MouseEvent): void {
   if (!ctx.open(event)) return;
   open.value = false;
 }
+
+const showAdd = computed(() => props.addButton && !props.multiple && props.lookup.editor !== undefined);
+const addTitle = computed(() => {
+  const key = deskKeyLabel('action-new');
+  return key ? `New (${key})` : 'New';
+});
 
 /**
  * New or Edit. In a form the box runs the editor and picks the saved row. In a grid the cell is

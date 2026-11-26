@@ -898,6 +898,54 @@ body.desk-col-dragging {
   cursor: pointer;
 }
 
+/* "+" beside a lookup that has an editor (DeskLookupBox addButton): a square joined to the box's right edge. */
+.desk-lookup.has-add {
+  display: flex;
+  align-items: stretch;
+}
+
+.desk-lookup.has-add > input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.desk-lookup.has-add > .desk-affix {
+  right: 27px;
+}
+
+.desk-field-add-btn {
+  flex: 0 0 26px;
+  width: 26px;
+  margin-left: -1px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--desk-grid-line);
+  border-radius: 0 3px 3px 0;
+  background: var(--desk-header-bg);
+  color: var(--desk-header-focus);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.desk-field-add-btn:hover {
+  background: var(--desk-cursor);
+  border-color: var(--desk-cursor);
+  color: var(--desk-row-bg);
+}
+
+.desk-combo-grid.has-add > .desk-affix {
+  right: 21px;
+}
+
+.desk-combo-grid .desk-field-add-btn {
+  flex-basis: 20px;
+  width: 20px;
+  border-radius: 0;
+}
+
 .desk-affix svg {
   width: 14px;
   height: 14px;
