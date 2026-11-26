@@ -25,7 +25,7 @@ git clone git@github.com:gowrav-vishwakarma/desk-framework.git
 npm install ../desk-framework   # "@desk/framework": "file:../desk-framework"
 ```
 
-The host sets `install-links=true` in its `.npmrc` (npm copies the package into `node_modules`, so there is one vue and one quasar), aliases `@desk/framework` to `node_modules/@desk/framework/src` (Quasar: `build.alias`, which also writes the tsconfig paths), and adds `@desk/framework` to Vite's `optimizeDeps.exclude`. The Ankpal desk (`ankpal-erp/ankpal-desk-frontend`) does all three, pins the commit it is tested with in `.desk-framework-ref`, and copies a new commit in with `npm run fw:update`.
+The host sets `install-links=true` in its `.npmrc` (npm copies the package into `node_modules`, so there is one vue and one quasar), aliases `@desk/framework` to `node_modules/@desk/framework/src` (Quasar: `build.alias`, which also writes the tsconfig paths), and adds `@desk/framework` to Vite's `optimizeDeps.exclude`. Peers: vue 3, quasar 2, vue-router 4 or 5 (the router APIs used, `useRoute`, `useRouter`, the leave guards and the injection keys, are the same in both; the tests run on 4), the TanStack table and virtual packages, echarts 6 and xlsx-js-style. The Ankpal desk (`ankpal-erp/ankpal-desk-frontend`) does all three, pins the commit it is tested with in `.desk-framework-ref`, and copies a new commit in with `npm run fw:update`.
 
 For Ankpal, where every checkout goes and how to run the API and the desk locally is in the Workspace section of
 [`ankpal-desk-frontend/README.md`](https://github.com/Ankpal-ERP/ankpal-desk-frontend#workspace-clone-and-run-everything)
