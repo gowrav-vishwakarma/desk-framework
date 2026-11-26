@@ -112,9 +112,12 @@ function strictSelect(): boolean {
   return props.selectAll !== false;
 }
 
+/** The "---" a `blank` select adds. A resting box with no value stays empty rather than showing it. */
+const BLANK_CHOICE: DeskSelectOption = { label: '---', value: '' };
+
 const choices = computed((): DeskSelectOption[] => {
   if (!props.blank || props.options.some((option) => option.value === '')) return props.options;
-  return [{ label: '---', value: '' }, ...props.options];
+  return [BLANK_CHOICE, ...props.options];
 });
 
 const filtered = computed(() => {
@@ -127,6 +130,8 @@ const filtered = computed(() => {
 
 /** `INDIA` and `India` are the same choice. The stored text often differs in case from the list. */
 function sameChoice(option: DeskSelectOption, value: string): boolean {
+  // No value is the page's own empty option ("Any"), wherever it sits in the list.
+  if (!value) return option.value === '' && option !== BLANK_CHOICE;
   const needle = value.trim().toLowerCase();
   return needle !== '' && (option.value.trim().toLowerCase() === needle || option.label.trim().toLowerCase() === needle);
 }
