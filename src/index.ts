@@ -120,7 +120,7 @@ export { DESK_UNPLACED_ISSUES, type DeskUnplacedIssueDisplay } from './form/issu
 export { YES_NO } from './form/yesNo';
 export { applyDeskMask } from './form/fieldMask';
 export { parseDeskDate, formatDeskDate } from './date/deskDate';
-export { focusNextDeskField, focusPrevDeskField } from './focus/useDeskFocus';
+export { focusDeskField, focusNextDeskField, focusPrevDeskField } from './focus/useDeskFocus';
 
 export type { DeskFilterPeriod, DeskFilterSaved, DeskFilterSpec, DeskFilterValues, DeskPhraseRule, DeskPhraseContext } from './filter/types';
 export type { DeskIssue } from './form/issues';
@@ -200,6 +200,8 @@ export { useDeskToolbar } from './layout/toolbar';
 export { useDeskShellLayer } from './layout/useDeskShellLayer';
 export { deskTogglesMenu } from './menu/togglesMenu';
 export { default as PivotDesigner } from './pivot/PivotDesigner.vue';
+export { default as PivotTable } from './pivot/PivotTable.vue';
+export { default as PivotChart } from './pivot/PivotChart.vue';
 export { buildPivotCube } from './pivot/pivotCube';
 export type { PivotAggregate, PivotField, PivotLayout } from './pivot/pivotTypes';
 export { newCodeRow } from './split/codes';

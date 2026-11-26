@@ -73,7 +73,7 @@ A call returns `{ ok: false, error, reason }` when it cannot do what was asked. 
 
 ## Public entry
 
-A new app imports only `@desk/framework` (`src/index.ts`). That import also loads the theme stylesheets. Ankpal pages keep the deep paths they already use (`@desk/framework/grid/...` once they import the package). A new host-facing symbol is added to `index.ts`. Form layout, pivot, and spreadsheet export stay off that list until a host needs them.
+A new app imports only `@desk/framework` (`src/index.ts`). That import also loads the theme stylesheets. Ankpal pages keep the deep paths they already use (`@desk/framework/grid/...` once they import the package). A new host-facing symbol is added to `index.ts`. Form layout and spreadsheet export stay off that list until a host needs them. Pivot is on it as `PivotDesigner` and, for a page that shows a fixed pivot without the designer, `PivotTable` and `PivotChart`.
 
 ## Host
 
@@ -325,7 +325,7 @@ row actions. `catalogFromColumns(columns)` gives such a list a catalog from its 
 
 ## Focus is the framework's job
 
-A page or dialog does not move focus by hand. Mark the first field or grid `initial` (or pass `initial-focus`) and the layer focuses it when it opens. A `DeskDialog` returns focus to the field that opened it when it closes. A click on blank space is recovered by Enter and Escape (see Focus recovery in `keys/README.md`). Call `focusFirstRow()` only for a change the layer cannot know about, such as new rows after a filter.
+A page or dialog does not move focus by hand. Mark the first field or grid `initial` (or pass `initial-focus`) and the layer focuses it when it opens. A `DeskDialog` returns focus to the field that opened it when it closes. A click on blank space is recovered by Enter and Escape (see Focus recovery in `keys/README.md`). Call `focusFirstRow()` only for a change the layer cannot know about, such as new rows after a filter. `focusDeskField(id)` focuses one field through its layer's rules, for the same kind of case (a field a host action points at); it answers false when that field is not on screen.
 
 ## Grouped rows
 
