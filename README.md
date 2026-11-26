@@ -8,6 +8,11 @@ Keyboard-first UI for a Quasar app: shortcuts, focus order, dialogs, menu bar, a
 
 The framework always runs inside Quasar. `vue` and `quasar` are peer dependencies. It also uses `vue-router`, `@tanstack/vue-virtual`, `@tanstack/vue-table`, `xlsx-js-style` and `echarts` (peers too). The testkit (`@desk/framework/testkit`) has no runtime imports: it runs in Node beside Playwright, Vitest or an MCP server without pulling them in.
 
+## Reports
+
+The report studio (list, viewer, pivot over any report, designer) is `src/reports`, on the report engine of
+`@ops/framework`; guide: [`docs/reports.md`](docs/reports.md).
+
 ## Package
 
 `@desk/framework` ships its source (`.ts`, `.vue`, `.css`); the host's Vite and Quasar build compile it, so there is no build step here. Exports: `.` (`src/index.ts`), `./testkit` (`src/testkit/index.ts`), and `./*` for deep paths into `src/`.
