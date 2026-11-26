@@ -634,14 +634,18 @@ function onKey(event: KeyboardEvent): void {
     return;
   }
   if (event.key === 'Escape') {
-    event.preventDefault();
     if (open.value) {
+      event.preventDefault();
       open.value = false;
       browsing.value = false;
       draft.value = text.value;
       return;
     }
-    emit('cancel');
+    // Nothing open: a grid cell claims Escape to cancel its edit; a form field leaves it to its dialog or page.
+    if (props.variant === 'grid') {
+      event.preventDefault();
+      emit('cancel');
+    }
     return;
   }
   if (event.key === 'Tab' || (event.key === 'Enter' && event.shiftKey && !event.ctrlKey && !event.metaKey && !event.altKey)) {
