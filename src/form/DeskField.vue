@@ -18,7 +18,7 @@
       v-bind="{
         ...(menu ? { menu } : {}),
         ...(initial ? { initial: true } : {}),
-        ...(placeholder ? { placeholder } : {}),
+        ...(hint ? { placeholder: hint } : {}),
         ...(hoverTitle ? { title: hoverTitle } : {}),
       }"
       @advance="(via) => focusNextDeskField(fieldId, via)"
@@ -33,7 +33,7 @@
       v-bind="{
         ...(menu ? { menu } : {}),
         ...(initial ? { initial: true } : {}),
-        ...(placeholder ? { placeholder } : {}),
+        ...(hint ? { placeholder: hint } : {}),
         ...(hoverTitle ? { title: hoverTitle } : {}),
       }"
       @pick="emit('pick', $event)"
@@ -200,15 +200,24 @@ const props = withDefaults(defineProps<{
   submits?: boolean;
   /** The browser `autocomplete` hint, such as `username` or `current-password`. Text and password kinds. */
   autocomplete?: string;
+  /** Hint shown while the field is empty. Wins over the hint of the `placeholder` label style. */
+  placeholder?: string;
+  /** Longest value kept, counted after `formatter`. Typed kinds (text, number, password, textarea). */
+  maxlength?: number | string;
+  /** Runs on every input; what it returns is shown and stored. Typed kinds (text, number, password, textarea). */
+  formatter?: (value: string) => string;
+  /** Number kind: store a Number, or null when empty, instead of the typed text. Text that is not a number stays text. */
+  numeric?: boolean;
 }>(), { labelStyle: 'side' });
 const emit = defineEmits<{ pick: [Record<string, unknown>]; open: []; submit: [] }>();
 
 const form = inject(DESK_FORM_ISSUES, null);
 const ctx = useDeskContextMenu(() => props.menu ?? null);
-const placeholder = computed(() => (props.labelStyle === 'placeholder' ? `${props.label}${props.required ? ' *' : ''}` : ''));
+const hint = computed(() => props.placeholder ?? (props.labelStyle === 'placeholder' ? `${props.label}${props.required ? ' *' : ''}` : ''));
+const maxLength = computed(() => (props.maxlength === undefined || props.maxlength === '' ? undefined : Number(props.maxlength)));
 const hoverTitle = computed(() => (props.labelStyle === 'placeholder' || props.labelStyle === 'inset' ? props.label : ''));
 const hintAttrs = computed(() => ({
-  ...(placeholder.value ? { placeholder: placeholder.value } : {}),
+  ...(hint.value ? { placeholder: hint.value } : {}),
   ...(hoverTitle.value ? { title: hoverTitle.value } : {}),
 }));
 const shown = computed(() => (model.value === null || model.value === undefined ? '' : String(model.value)));
@@ -268,7 +277,18 @@ function onDate(value: string | null): void {
 
 function onInput(event: Event): void {
   form?.edited(props.fieldId);
-  model.value = (event.target as HTMLInputElement).value;
+  const target = event.target as HTMLInputElement | HTMLTextAreaElement;
+  let value = props.formatter ? props.formatter(target.value) : target.value;
+  // Capped here, after the formatter, not by a native maxlength: that would cut a paste before the formatter drops its spaces.
+  if (maxLength.value !== undefined) value = value.slice(0, maxLength.value);
+  if (target.value !== value) target.value = value;
+  model.value = props.numeric && props.kind === 'number' ? numberOrText(value) : value;
+}
+
+function numberOrText(value: string): number | string | null {
+  if (value.trim() === '') return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : value;
 }
 
 function onEnter(event: KeyboardEvent): void {

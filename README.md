@@ -115,6 +115,15 @@ The shell is `layout/DeskShell.vue` (`q-layout`). It is one viewport tall. The h
 
 Enter and Tab move to the next field that is on screen and can be edited. A field that is hidden, read-only, or disabled is skipped. Shift+Tab skips those the same way, going back. A text input or textarea selects its value when it takes focus, so typing replaces it and Enter moves on.
 
+## Shaping what is typed
+
+`DeskField` props for the typed kinds (text, number, password, textarea):
+
+- `placeholder` is the hint while the field is empty. It wins over the hint of the `placeholder` label style.
+- `formatter(value)` runs on every input. What it returns is shown and stored, such as upper-cased text or digits only. A product's own rules (an id format) live in the product as a formatter.
+- `maxlength` caps the value after the formatter, not through the native attribute, so a paste like `ABCDE 1234 F` keeps its last characters once the spaces go.
+- `numeric` (number kind) stores a Number, or null when empty. Without it a number field stores the typed text, as before. Text that is not a number stays text, so validation can show it.
+
 ## Required fields and errors
 
 Any page can use this. It does not know what a page is about.
