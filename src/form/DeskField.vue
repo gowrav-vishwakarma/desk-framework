@@ -159,6 +159,7 @@ import DeskDateInput from '../date/DeskDateInput.vue';
 import { dateParseOptions } from '../date/datePrefs';
 import { parseDeskDate } from '../date/deskDate';
 import DeskLookupBox from './DeskLookupBox.vue';
+import { applyDeskMask } from './fieldMask';
 
 const model = defineModel<string | number | null>({ required: true });
 /** Currency and factor. Used when `kind` is `currency`. The text model stays unused for that kind. */
@@ -202,7 +203,12 @@ const props = withDefaults(defineProps<{
   autocomplete?: string;
   /** Hint shown while the field is empty. Wins over the hint of the `placeholder` label style. */
   placeholder?: string;
-  /** Longest value kept, counted after `formatter`. Typed kinds (text, number, password, textarea). */
+  /**
+   * Pattern the value must fit, one character per position: `A` letter, `9` digit, `*` either (see `applyDeskMask`).
+   * A misfit character is dropped. Its length is the longest value unless `maxlength` is given. Typed kinds.
+   */
+  mask?: string;
+  /** Longest value kept, counted after `mask` and `formatter`. Typed kinds (text, number, password, textarea). */
   maxlength?: number | string;
   /** Runs on every input; what it returns is shown and stored. Typed kinds (text, number, password, textarea). */
   formatter?: (value: string) => string;
@@ -214,7 +220,9 @@ const emit = defineEmits<{ pick: [Record<string, unknown>]; open: []; submit: []
 const form = inject(DESK_FORM_ISSUES, null);
 const ctx = useDeskContextMenu(() => props.menu ?? null);
 const hint = computed(() => props.placeholder ?? (props.labelStyle === 'placeholder' ? `${props.label}${props.required ? ' *' : ''}` : ''));
-const maxLength = computed(() => (props.maxlength === undefined || props.maxlength === '' ? undefined : Number(props.maxlength)));
+const maxLength = computed(() =>
+  props.maxlength === undefined || props.maxlength === '' ? (props.mask ? props.mask.length : undefined) : Number(props.maxlength),
+);
 const hoverTitle = computed(() => (props.labelStyle === 'placeholder' || props.labelStyle === 'inset' ? props.label : ''));
 const hintAttrs = computed(() => ({
   ...(hint.value ? { placeholder: hint.value } : {}),
@@ -278,8 +286,9 @@ function onDate(value: string | null): void {
 function onInput(event: Event): void {
   form?.edited(props.fieldId);
   const target = event.target as HTMLInputElement | HTMLTextAreaElement;
-  let value = props.formatter ? props.formatter(target.value) : target.value;
-  // Capped here, after the formatter, not by a native maxlength: that would cut a paste before the formatter drops its spaces.
+  let value = props.mask ? applyDeskMask(target.value, props.mask) : target.value;
+  if (props.formatter) value = props.formatter(value);
+  // Capped here, after the mask and formatter, not by a native maxlength: that would cut a paste before the formatter drops its spaces.
   if (maxLength.value !== undefined) value = value.slice(0, maxLength.value);
   if (target.value !== value) target.value = value;
   model.value = props.numeric && props.kind === 'number' ? numberOrText(value) : value;

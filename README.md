@@ -120,8 +120,9 @@ Enter and Tab move to the next field that is on screen and can be edited. A fiel
 `DeskField` props for the typed kinds (text, number, password, textarea):
 
 - `placeholder` is the hint while the field is empty. It wins over the hint of the `placeholder` label style.
-- `formatter(value)` runs on every input. What it returns is shown and stored, such as upper-cased text or digits only. A product's own rules (an id format) live in the product as a formatter.
-- `maxlength` caps the value after the formatter, not through the native attribute, so a paste like `ABCDE 1234 F` keeps its last characters once the spaces go.
+- `mask` is a pattern, one character per position: `A` a letter, `9` a digit, `*` either (`applyDeskMask` in `form/fieldMask.ts`). Typed or pasted characters fill the positions in order; one that does not fit is dropped and the position waits, and spaces and dashes go. Letters are upper-cased when the pattern takes letters. The pattern length is the longest value unless `maxlength` is given. The framework names no formats: a product keeps its own patterns (an id such as `AAAAA9999A`) in its own code.
+- `formatter(value)` runs on every input, after the mask. What it returns is shown and stored, such as upper-cased text or digits only. A product's own rules (an id format) live in the product as a formatter.
+- `maxlength` caps the value after the mask and formatter, not through the native attribute, so a paste like `ABCDE 1234 F` keeps its last characters once the spaces go.
 - `numeric` (number kind) stores a Number, or null when empty. Without it a number field stores the typed text, as before. Text that is not a number stays text, so validation can show it.
 
 ## Required fields and errors

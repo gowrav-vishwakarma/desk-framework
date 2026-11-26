@@ -118,6 +118,7 @@ export { provideDeskLayer, useDeskLayer } from './keys/useDeskLayer';
 export { DESK_FORM_ISSUES, issuesFromErrors } from './form/issues';
 export { DESK_UNPLACED_ISSUES, type DeskUnplacedIssueDisplay } from './form/issueDisplay';
 export { YES_NO } from './form/yesNo';
+export { applyDeskMask } from './form/fieldMask';
 export { parseDeskDate, formatDeskDate } from './date/deskDate';
 export { focusNextDeskField, focusPrevDeskField } from './focus/useDeskFocus';
 
