@@ -23,7 +23,7 @@
     <DeskMark v-if="!readonly && variant !== 'grid'" kind="date" :field="fieldId" @press="toggleCalendar" />
     <span v-if="detailText" class="desk-date-preview">{{ detailText }}</span>
     <Teleport to="body">
-      <div v-if="open" class="desk-calendar-pop" :style="popStyle">
+      <div v-if="open" ref="pop" class="desk-calendar-pop" :style="popStyle">
         <DeskCalendar :view="view" :selected="highlighted" :today="today" @pick="onPick" @shift="browse += $event" />
       </div>
     </Teleport>
@@ -41,6 +41,7 @@
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { claimDeskKey, isDeskNavKey } from '../focus/useDeskFocus';
 import DeskContextMenu from '../menu/DeskContextMenu.vue';
+import { placePopup } from '../menu/placePopup';
 import DeskMark from '../form/DeskMark.vue';
 import { mergeDeskMenus, useDeskContextMenu, type DeskFieldMenu } from '../menu/fieldMenu';
 import DeskCalendar from './DeskCalendar.vue';
@@ -84,6 +85,7 @@ const defaultMenu = dateFieldMenu();
 const ctx = useDeskContextMenu(() => mergeDeskMenus(defaultMenu, props.menu));
 const root = ref<HTMLElement | null>(null);
 const box = ref<HTMLInputElement | null>(null);
+const pop = ref<HTMLElement | null>(null);
 const focused = ref(false);
 const typed = ref(false);
 const invalid = ref(false);
@@ -154,10 +156,10 @@ function shownDraft(value: string | null): string {
 function placeCalendar(): void {
   const input = box.value;
   if (!input) return;
-  const rect = input.getBoundingClientRect();
-  let top = rect.bottom + 2;
-  if (top + 240 > window.innerHeight) top = Math.max(4, rect.top - 240);
-  popStyle.value = { top: `${top}px`, left: `${Math.min(rect.left, window.innerWidth - 210)}px` };
+  // Called after nextTick, so the calendar is drawn: place it by its real size (206 x 240 until it is).
+  const size = { width: pop.value?.offsetWidth || 206, height: pop.value?.offsetHeight || 240 };
+  const spot = placePopup(input.getBoundingClientRect(), size);
+  popStyle.value = { top: `${spot.top}px`, left: `${spot.left}px` };
 }
 
 function closeMenu(): void {

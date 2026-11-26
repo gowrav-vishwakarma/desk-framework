@@ -869,13 +869,15 @@ body.desk-col-dragging {
 }
 
 .desk-combo,
-.desk-lookup {
+.desk-lookup,
+.desk-date {
   position: relative;
   width: 100%;
 }
 
 .desk-field .desk-combo > input,
 .desk-field .desk-lookup > input,
+.desk-field .desk-date > input,
 .desk-grid .desk-combo > input,
 .desk-grid .desk-lookup > input {
   padding-right: 18px;

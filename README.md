@@ -242,7 +242,7 @@ Every desk form survives an accidental reload: the `useDeskFormDirty` tracker ke
 
 `panel-class="is-full"` makes a dialog almost the whole window, and the grid inside it takes the remaining height. `is-sheet`, `is-page`, `is-link` and `is-wide` are the narrower sizes.
 
-**Stacking.** Every dialog draws above the host header (`.desk-dialog`, z-index 2100; the Quasar header is 2000). A question opened over a dialog (`front`, 2200) draws above it. Lookup lists, calendars, currency pickers, context menus, column menus and the jump peek draw above those (2300), so a list opened inside a dialog is not hidden.
+**Stacking.** Every dialog draws above the host header (`.desk-dialog`, z-index 2100; the Quasar header is 2000). A question opened over a dialog (`front`, 2200) draws above it. Lookup lists, calendars, currency pickers, context menus, column menus and the jump peek draw above those (2300), so a list opened inside a dialog is not hidden. A date calendar is placed like the other popups (`menu/placePopup.ts`), by its drawn size: under its input, above it when the window bottom is too close, always inside the window.
 
 ## Settings grid
 
