@@ -119,4 +119,49 @@ describe('desk grid foot entry', () => {
     expect(wrapper.emitted('foot')?.[0]).toEqual(['overall']);
     wrapper.unmount();
   });
+
+  /*
+   * A button in a total line (round off's Yes / No, a dialog mark) must take ONE click. Moving the cursor to the line on
+   * mousedown closes the cursor row's drawer, the table shrinks, the button slides from under the pointer and the
+   * browser fires no click (Ankpal: round off needed two clicks). So the cursor moves only after the button's click.
+   */
+  it('a mousedown on a button in a total line leaves the cursor row (and its drawer) in place until the click has run', async () => {
+    vi.stubGlobal('ResizeObserver', ResizeObserverStub);
+    vi.useFakeTimers();
+    const clicked = vi.fn();
+    const wrapper = mount(DeskGrid, {
+      props: {
+        mode: 'entry',
+        rows: [{ id: 1, productName: 'Bolt', qty: 2 }],
+        columns: [
+          { id: 'productName', header: 'Item', width: 120 },
+          { id: 'qty', header: 'Qty', width: 60 },
+        ],
+        foot: [{ id: 'roundOff', edit: 'roundOff' }],
+        drawerFor: () => true,
+      },
+      slots: {
+        drawer: '<div class="probe-drawer">batch rows</div>',
+        foot: '<tr><td data-foot-line="roundOff">Round off <button type="button" class="probe-flag" tabindex="-1">Yes</button></td></tr>',
+      },
+      attachTo: document.body,
+    });
+    wrapper.get('.probe-flag').element.addEventListener('click', clicked);
+    (wrapper.get('.table-content').element as HTMLElement).focus();
+    await flushPromises();
+    expect(wrapper.find('.probe-drawer').exists(), 'the cursor row shows its drawer').toBe(true);
+
+    await wrapper.get('.probe-flag').trigger('mousedown');
+    await flushPromises();
+    expect(wrapper.find('.probe-drawer').exists(), 'nothing moves under the pointer before the click').toBe(true);
+
+    await wrapper.get('.probe-flag').trigger('mouseup');
+    await wrapper.get('.probe-flag').trigger('click');
+    vi.runAllTimers();
+    await flushPromises();
+    expect(clicked).toHaveBeenCalledTimes(1);
+    expect(wrapper.find('.probe-drawer').exists(), 'then the cursor is on the total line').toBe(false);
+    vi.useRealTimers();
+    wrapper.unmount();
+  });
 });

@@ -1561,11 +1561,21 @@ function onFootMouse(event: MouseEvent): void {
   const id = host.getAttribute('data-foot-line');
   const index = (props.foot ?? []).findIndex((line) => line.id === id);
   if (index < 0) return;
-  commitInPlace();
-  editing.value = false;
-  footIndex.value = index;
-  if (!target.closest('button')) focusGrid();
-  placeSquare();
+  const moveToLine = () => {
+    commitInPlace();
+    editing.value = false;
+    footIndex.value = index;
+    placeSquare();
+  };
+  // A button in the line (round off's Yes / No, a dialog mark) takes one click: moving the cursor now would close the
+  // cursor row's drawer, shrink the table and slide the button from under the pointer, so the browser fires no click.
+  // The cursor follows once the button's click has run (after mouseup; a timer, as the click comes right after it).
+  if (target.closest('button')) {
+    window.addEventListener('mouseup', () => window.setTimeout(moveToLine, 0), { once: true });
+    return;
+  }
+  moveToLine();
+  focusGrid();
 }
 
 function focusGrid(): void {
